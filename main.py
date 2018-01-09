@@ -32,14 +32,7 @@ NEEDED_COUNTER = (
     # 'disk:numberWriteAveraged:average'
 )
 
-NODE1 = {
-    'host': 'localhost',
-    'user': 'administrator@vsphere.local',
-    'pwd': '99Cloud!@#',
-    'port': 8443
-}
-
-NODE2 = {
+NODE = {
     'host': '192.168.22.171',
     'user': 'administrator@vsphere.local',
     'pwd': '99Cloud!@#',
@@ -50,9 +43,12 @@ NODE2 = {
 class Vmware(object):
 
     def __init__(self):
-        si = SmartConnectNoSSL(**NODE2)
-        self.content = si.RetrieveContent()
+        self.si = SmartConnectNoSSL(**NODE)
+        self.content = self.si.RetrieveContent()
         self.perfManager = self.content.perfManager
+
+    def close(self):
+        Disconnect(self.si)
 
     @property
     def counter_info(self):
@@ -162,9 +158,9 @@ def timing(times=1):
 
 
 def performance():
+    LOG.info('Starting performance test')
 
     # Get basic information
-
     def get_info():
 
         vmware = Vmware()
@@ -172,16 +168,20 @@ def performance():
         up_nodes = list(vmware.get_all_power_on_nodes())
         LOG.info('Get %d nodes: %s', len(nodes), nodes)
         LOG.info('Get %d up nodes: %s', len(up_nodes), up_nodes)
+        vmware.close()
 
     @timing(times=1)
     def get_vmware_and_nodes():
         vmware = Vmware()
+        # Tigger counter_info for cache the information
+        vmware.counter_info
         # nodes = vmware.get_all_power_on_nodes()
         nodes = vmware.get_all_nodes()
         return vmware, nodes
 
     @timing(times=1)
     def one_by_one():
+        LOG.info('---- start one_by_one test ---')
         vmware, nodes = get_vmware_and_nodes()
 
         @timing(times=1)
@@ -189,35 +189,50 @@ def performance():
             for node in nodes:
                 vmware.get_counters([node])
         inner()
+        vmware.close()
+        LOG.info('---- end one_by_one test ---')
 
     @timing(times=1)
     def many():
+        LOG.info('--- start many test ----')
         vmware, nodes = get_vmware_and_nodes()
 
         @timing(times=1)
         def inner():
             vmware.get_counters(nodes)
         inner()
+        vmware.close()
+        LOG.info('--- end many test ----')
 
     @timing(times=1)
-    def run_concurrency():
+    def run_concurrency(pool_size=3, node_size=4):
+        LOG.info('---- start concurrency test ---')
+        LOG.info('pool: %d, nodes_each_time: %s', pool_size, node_size)
         vmware, nodes = get_vmware_and_nodes()
-        pool = ThreadPool(3)
+        pool = ThreadPool(pool_size)
 
         @timing(times=1)
         def inner():
             returns = []
-            for sub_nodes in group(nodes, 4):
+            for sub_nodes in group(nodes, node_size):
                 returns.append(pool.apply_async(vmware.get_counters,
                                                 (sub_nodes,)))
             for ret in returns:
                 ret.get(0xff)
                 # results.update(ret.get(0xff))
         inner()
+        vmware.close()
+        LOG.info('--- end concurrency test ---')
 
     get_info()
 
-    run_concurrency()
+    for pool_size, node_size in (
+            (10, 5),
+            (10, 10),
+            (10, 20),
+            (10, 30)
+            ):
+        run_concurrency(pool_size, node_size)
     one_by_one()
     many()
 
@@ -228,6 +243,7 @@ def get_one_by_one():
     for node in nodes:
         results = vmware.get_counters([node])
         print_result([node], results)
+    vmware.close()
 
 
 def group(eles, count):
@@ -256,6 +272,7 @@ def run_multi_process():
     for ret in returns:
         results.update(ret.get(0xff))
     print_result(nodes, results)
+    vmware.close()
 
 
 def main():
@@ -263,6 +280,7 @@ def main():
     nodes = vmware.get_all_power_on_nodes()
     results = vmware.get_counters(nodes)
     print_result(nodes, results)
+    vmware.close()
 
 
 if __name__ == "__main__":
@@ -270,8 +288,9 @@ if __name__ == "__main__":
         func = "performance"
     else:
         func = sys.argv[1]
+    log_formatter = '%(asctime)s %(levelname)s %(message)s'
     if func == 'performance':
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.INFO, format=log_formatter)
     else:
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG, format=log_formatter)
     globals()[func]()

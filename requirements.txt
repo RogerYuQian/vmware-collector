@@ -1,2 +1,3 @@
 pyvmomi
 ipdb
+PrettyTable
