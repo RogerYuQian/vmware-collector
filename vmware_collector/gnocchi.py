@@ -4,7 +4,6 @@ from gnocchiclient import exceptions as gnocchi_exc
 from gnocchiclient import client
 
 from vmware_collector import nova
-from vmware_collector import utils
 from vmware_collector import keystone
 
 
@@ -26,19 +25,18 @@ class GnocchiHelper(object):
         self._instance_cache = {}
 
     def handler_instance_stats(self, instance_stats):
+        measures = {}
         for instance_stat in instance_stats:
-            self._handle_instance_stat(instance_stat)
+            measures.update(self._handle_instance_stat(instance_stat))
+        self.client.metric.batch_resources_metrics_measures(
+                measures,
+                create_metrics=True)
+        LOG.info('Pushed measures for instance: %s', instance_stats)
 
     def _handle_instance_stat(self, instance_stat):
-        metric = self.get_metric('cpu_util', instance_stat)
-        measures = [
-            {
-                'timestamp': utils.format_date(instance_stat.create_at),
-                'value': instance_stat.cpu
-            }
-
-        ]
-        self.client.metric.add_measures(metric['id'], measures)
+        resource = self.get_resource(instance_stat)
+        measures = instance_stat.to_measures()
+        return {resource['id']: measures}
 
     def get_server_info(self, uuid):
         server = self._instance_cache.get(uuid)

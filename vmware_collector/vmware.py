@@ -5,15 +5,14 @@ from pyVim.connect import SmartConnectNoSSL, Disconnect
 
 from vmware_collector import utils
 
-
 LOG = logging.getLogger(__name__)
 
 NEEDED_COUNTER = (
     'cpu:usage:average',
     # 'mem:consumed:average',
     'mem:usage:average',
-    # 'net:received:average',
-    # 'net:transmitted:average',
+    'net:received:average',
+    'net:transmitted:average',
     # 'disk:read:average',
     # 'disk:numberReadAveraged:average',
     # 'disk:write:average',
@@ -22,22 +21,43 @@ NEEDED_COUNTER = (
 
 
 class InstanceStat(object):
-
     def __init__(self, uuid, cpu=None, ram=None):
-        #TODO(jeffrey4l): use a real uuid
+        # TODO(jeffrey4l): use a real uuid
         self.uuid = '67d9d526-4dee-4a15-93ba-679b2b1f2ff5'
         self.cpu = cpu
         self.ram = ram
+        self.rx = 0
+        self.tx = 0
         self.create_at = utils.now()
 
     def __repr__(self):
-        return '<InstanceStat:%s cpu:%s ram:%s>' % (self.uuid,
-                                                    self.cpu,
+        return '<InstanceStat:%s cpu:%s ram:%s>' % (self.uuid, self.cpu,
                                                     self.ram)
+
+    def to_measures(self):
+        measures = {
+            'cpu_util': [{
+                'timestamp': utils.format_date(self.create_at),
+                'value': self.cpu
+            }],
+            'memory.usage': [{
+                'timestamp': utils.format_date(self.create_at),
+                'value': self.ram
+            }],
+            'network.incoming.bytes': [{
+                'timestamp': utils.format_date(self.create_at),
+                'value': self.rx,
+            }],
+            'network.outgoing.bytes': [{
+                'timestamp': utils.format_date(self.create_at),
+                'value': self.tx,
+            }]
+        }
+        LOG.debug('Get measures for %s: %s', self.uuid, measures)
+        return measures
 
 
 class Vmware(object):
-
     def __init__(self, conf):
         self.conf = conf
         vmware_conf = conf.vmware
@@ -63,8 +83,7 @@ class Vmware(object):
         # [{id:name},]
         counter_info = {}
         for c in self.perfManager.perfCounter:
-            fullname = '%s:%s:%s' % (c.groupInfo.key,
-                                     c.nameInfo.key,
+            fullname = '%s:%s:%s' % (c.groupInfo.key, c.nameInfo.key,
                                      c.rollupType)
             counter_info[c.key] = fullname
         return counter_info
@@ -78,7 +97,7 @@ class Vmware(object):
         recursive = True
 
         container_view = self.content.viewManager.CreateContainerView(
-                container, viewType, recursive)
+            container, viewType, recursive)
         children = container_view.view
         for child in children:
             name = child.config.name
@@ -97,12 +116,11 @@ class Vmware(object):
         recursive = True
 
         container_view = self.content.viewManager.CreateContainerView(
-                container, viewType, recursive)
+            container, viewType, recursive)
         children = container_view.view
         for child in children:
             vm_power_state = child.summary.runtime.powerState
-            if (power_state and
-                    vm_power_state != power_state):
+            if (power_state and vm_power_state != power_state):
                 LOG.debug('Skip %s state node: %s', vm_power_state, child)
                 continue
             yield child
@@ -118,13 +136,16 @@ class Vmware(object):
         '''
         query_specs = []
         for node in nodes:
-            needed_couter_ids = [_id for _id, name in self.counter_info.items()
-                                 if name in NEEDED_COUNTER]
-            metric_ids = [vim.PerformanceManager.MetricId(counterId=x)
-                          for x in needed_couter_ids]
-            query_spec = vim.PerformanceManager.QuerySpec(maxSample=1,
-                                                          metricId=metric_ids,
-                                                          entity=node)
+            needed_couter_ids = [
+                _id for _id, name in self.counter_info.items()
+                if name in NEEDED_COUNTER
+            ]
+            metric_ids = [
+                vim.PerformanceManager.MetricId(counterId=x)
+                for x in needed_couter_ids
+            ]
+            query_spec = vim.PerformanceManager.QuerySpec(
+                maxSample=1, metricId=metric_ids, entity=node)
             query_specs.append(query_spec)
         results = self.perfManager.QueryPerf(querySpec=query_specs)
         ret = []
@@ -136,6 +157,10 @@ class Vmware(object):
                     instance_stat.cpu = item.value[0]
                 elif item_name == 'mem:usage:average':
                     instance_stat.ram = item.value[0]
+                elif item_name == 'net:received:average':
+                    instance_stat.rx = item.value[0]
+                elif item_name == 'net:transmitted:average':
+                    instance_stat.tx = item.value[0]
             ret.append(instance_stat)
         LOG.info('Get: %s', ret)
         return ret

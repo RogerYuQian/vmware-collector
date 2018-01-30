@@ -6,6 +6,7 @@
 
 import sys
 import logging
+import time
 
 from oslo_config import cfg
 
@@ -44,8 +45,10 @@ def main():
     opts.register_opts(conf)
     conf(sys.argv[1:])
     manager = Manager(conf)
-    logging.basicConfig(level=logging.DEBUG)
-    manager.run()
+    logging.basicConfig(level=logging.INFO)
+    while True:
+        manager.run()
+        time.sleep(10)
 
 
 if __name__ == "__main__":
