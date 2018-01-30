@@ -1,3 +1,7 @@
 pyvmomi
-ipdb
 PrettyTable
+python-novaclient
+keystoneauth1
+
+oslo_messaging
+gnocchiclient

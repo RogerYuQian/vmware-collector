@@ -116,7 +116,7 @@ class Vmware(object):
             ret[node_uuid] = {}
             for item_name, item in zip(NEEDED_COUNTER, items.value):
                 ret[node_uuid][item_name] = item.value[0]
-        LOG.debug('Get: %s', ret)
+        LOG.info('Get: %s', ret)
         return ret
 
 
@@ -230,11 +230,13 @@ def performance():
             (10, 5),
             (10, 10),
             (10, 20),
-            (10, 30)
+            (10, 30),
+            (10, 40),
+            (10, 50),
             ):
         run_concurrency(pool_size, node_size)
     one_by_one()
-    many()
+    # many()
 
 
 def get_one_by_one():
