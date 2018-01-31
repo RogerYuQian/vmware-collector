@@ -13,9 +13,9 @@ NEEDED_COUNTER = (
     'mem:usage:average',
     'net:received:average',
     'net:transmitted:average',
-    # 'disk:read:average',
+    'disk:read:average',
     # 'disk:numberReadAveraged:average',
-    # 'disk:write:average',
+    'disk:write:average',
     # 'disk:numberWriteAveraged:average'
 )
 
@@ -31,8 +31,8 @@ class InstanceStat(object):
         self.create_at = utils.now()
 
     def __repr__(self):
-        return '<InstanceStat:%s cpu:%s ram:%s>' % (self.uuid, self.cpu,
-                                                    self.ram)
+        return '<InstanceStat:%s cpu:%s ram:%s rx:%s tx: %x>' % (self.uuid, self.cpu,
+                                                    self.ram, self.rx, self.tx)
 
     def to_measures(self):
         measures = {
@@ -141,18 +141,22 @@ class Vmware(object):
                 if name in NEEDED_COUNTER
             ]
             metric_ids = [
-                vim.PerformanceManager.MetricId(counterId=x)
+                vim.PerformanceManager.MetricId(counterId=x, instance='*')
                 for x in needed_couter_ids
             ]
             query_spec = vim.PerformanceManager.QuerySpec(
                 maxSample=1, metricId=metric_ids, entity=node)
+            __import__('ipdb').set_trace()
             query_specs.append(query_spec)
         results = self.perfManager.QueryPerf(querySpec=query_specs)
         ret = []
         for node, items in zip(nodes, results):
             node_uuid = node.summary.config.instanceUuid
             instance_stat = InstanceStat(node_uuid)
+            print(len(items.value))
+            LOG.info(len(items.value))
             for item_name, item in zip(NEEDED_COUNTER, items.value):
+                __import__('ipdb').set_trace()
                 if item_name == 'cpu:usage:average':
                     instance_stat.cpu = item.value[0]
                 elif item_name == 'mem:usage:average':
