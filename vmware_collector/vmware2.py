@@ -161,6 +161,8 @@ class VsphereInspector(object):
                                   session.vim, vm_mobj, property_name)
 
     def _query_vm_perf_stats(self, vm_mobjs, duration):
+        '''
+        '''
         session = self._api_session
         client_factory = session.vim.client.factory
 

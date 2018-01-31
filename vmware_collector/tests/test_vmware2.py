@@ -20,7 +20,8 @@ class VmwareTest(test_base.BaseTestCase):
 
     def test_get_nova_instance_id(self):
         ins = vmware2.VsphereInspector(self.conf)
-        print(ins.get_nova_instance_id('vm-885'))
+        import pprint
+        pprint.pprint(ins.get_nova_instance_id('vm-885'))
 
 
 if __name__ == "__main__":
