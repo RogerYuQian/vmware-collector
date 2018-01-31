@@ -1,5 +1,6 @@
 import os
 from vmware_collector.tests import base as test_base
+import pprint
 
 from oslo_config import cfg
 
@@ -16,11 +17,10 @@ class VmwareTest(test_base.BaseTestCase):
         ins._init_vm_mobj_lookup_map()
         ins._init_perf_counter_id_lookup_map()
         stat = ins._query_vm_perf_stats(ins._vm_mobj_lookup_map.values(), 30)
-        print stat
+        pprint.pprint(stat)
 
     def test_get_nova_instance_id(self):
         ins = vmware2.VsphereInspector(self.conf)
-        import pprint
         pprint.pprint(ins.get_nova_instance_id('vm-885'))
 
 

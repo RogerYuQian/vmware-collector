@@ -1,0 +1,29 @@
++-----------------------+-----------------------------------------------------------------------+
+| Field                 | Value                                                                 |
++-----------------------+-----------------------------------------------------------------------+
+| created_by_project_id | 55ef6d34bb1e4f8f94d3507f5f033285                                      |
+| created_by_user_id    | e446dc2544204ed487f538e00b3519de                                      |
+| creator               | e446dc2544204ed487f538e00b3519de:55ef6d34bb1e4f8f94d3507f5f033285     |
+| ended_at              | None                                                                  |
+| id                    | 3f26a5fd-3d25-5011-976a-43039e1797c0                                  |
+| metrics               | disk.device.allocation: 3c7c955f-13c7-481b-b8d1-33539c3679a4          |
+|                       | disk.device.capacity: a81da21a-7b19-4038-8103-eff3def3c9a5            |
+|                       | disk.device.iops: 9f9a33b7-e360-460b-a2c6-7400ca4e5c31                |
+|                       | disk.device.latency: 3a4f726d-6c1d-4219-963e-7ea7cd0f30b2             |
+|                       | disk.device.read.bytes.rate: 5a2508ef-12a2-48e1-9861-4436ee1a8379     |
+|                       | disk.device.read.bytes: 418256e6-fdd2-43bd-8d5d-fcc7836cab72          |
+|                       | disk.device.read.requests.rate: b4323aea-ef9d-4d5d-81b6-d5c7afb02bce  |
+|                       | disk.device.read.requests: c5764820-285e-4853-9d56-e6825f948f09       |
+|                       | disk.device.usage: 9741f68a-1b0e-4c0a-a9d8-586751c65032               |
+|                       | disk.device.write.bytes.rate: 8dee58be-7544-4fc9-9ad6-c456e973d222    |
+|                       | disk.device.write.bytes: 6de39aa9-4f36-4f0a-92c0-aabe85446c22         |
+|                       | disk.device.write.requests.rate: da9fc554-ff28-4cd1-93e0-3c6053cee705 |
+|                       | disk.device.write.requests: 82cec730-5efb-47d9-9990-643f08adbb32      |
+| original_resource_id  | 2b3dc170-1e33-4fd9-8e65-87791c0fe174-hda                              |
+| project_id            | 3c204f3bf14f4b22a3bc7fce65d4f5db                                      |
+| revision_end          | None                                                                  |
+| revision_start        | 2017-07-31T23:57:37.608338+00:00                                      |
+| started_at            | 2017-07-31T23:57:37.608323+00:00                                      |
+| type                  | instance_disk                                                         |
+| user_id               | adaa17ed0488400887c13558dd61d051                                      |
++-----------------------+-----------------------------------------------------------------------+

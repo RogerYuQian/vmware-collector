@@ -24,20 +24,19 @@ class Manager(object):
     def __init__(self, conf):
         self.conf = conf
         self.novaclient = nova.get_nova_client(conf)
-        self.vmware_api = vmware.Vmware(conf)
 
     def get_all_nova_instance(self):
         return self.novaclient.servers.list()
 
     def run(self):
-        # instances = self.get_all_nova_instance()
-        # ids = [instance.id for instance in instances]
-        # vmware_nodes = self.vmware_api.get_nodes_by_name(ids)
-        vmware_nodes = self.vmware_api.get_all_power_on_nodes()
-        nodes = list(vmware_nodes)
-        instance_stats = self.vmware_api.get_counters(nodes)
+        insp = vmware.VsphereInspector(self.conf)
+        insp._init_vm_mobj_lookup_map()
+
+        vm_mobjs = insp._vm_mobj_lookup_map.values()
+
+        stats = insp._query_vm_perf_stats(vm_mobjs, 60)
         gh = gnocchi.GnocchiHelper(self.conf)
-        gh.handler_instance_stats(instance_stats)
+        gh.handler_instance_stats(stats)
 
 
 def main():
@@ -48,6 +47,7 @@ def main():
     logging.basicConfig(level=logging.INFO)
     while True:
         manager.run()
+        break
         time.sleep(10)
 
 

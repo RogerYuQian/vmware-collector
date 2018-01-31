@@ -1,0 +1,28 @@
++-----------------------+-----------------------------------------------------------------------+
+| Field                 | Value                                                                 |
++-----------------------+-----------------------------------------------------------------------+
+| created_by_project_id | 55ef6d34bb1e4f8f94d3507f5f033285                                      |
+| created_by_user_id    | e446dc2544204ed487f538e00b3519de                                      |
+| creator               | e446dc2544204ed487f538e00b3519de:55ef6d34bb1e4f8f94d3507f5f033285     |
+| ended_at              | None                                                                  |
+| id                    | c291f41b-28e3-5c5e-8516-1050b2096d0b                                  |
+| metrics               | network.incoming.bytes.rate: ce34663c-42ae-4ee0-a314-7f19b780e600     |
+|                       | network.incoming.bytes: fb0a2ccc-70b9-4557-a0c4-85013a52e45f          |
+|                       | network.incoming.packets.drop: 6d51de6a-66f4-4dce-8ada-d49a377b8cdb   |
+|                       | network.incoming.packets.error: c08c0575-a118-460a-b4a5-ad4e8ab436b8  |
+|                       | network.incoming.packets.rate: d11304af-449c-4f2b-ad76-0741466b19b5   |
+|                       | network.incoming.packets: c4c44ddc-3030-4b01-a3ab-1b8fda6625a4        |
+|                       | network.outgoing.bytes.rate: 2c1e19a0-e348-4ee9-8d3f-bc08525ea72d     |
+|                       | network.outgoing.bytes: 34310a9c-09b6-48ea-a218-549d07deeac3          |
+|                       | network.outgoing.packets.drop: e4408687-1139-4f18-a98a-851838ee7c04   |
+|                       | network.outgoing.packets.error: b2d1f699-ecb6-4a39-ae72-46912f242658  |
+|                       | network.outgoing.packets.rate: 563a38a4-cf06-4dc3-8d62-ab6ada869f7b   |
+|                       | network.outgoing.packets: 6952c86c-5ab4-45b3-b43b-04377a181f7c        |
+| original_resource_id  | instance-000000dd-2b3dc170-1e33-4fd9-8e65-87791c0fe174-tap33e8b1d0-69 |
+| project_id            | 3c204f3bf14f4b22a3bc7fce65d4f5db                                      |
+| revision_end          | None                                                                  |
+| revision_start        | 2017-07-31T23:57:37.020393+00:00                                      |
+| started_at            | 2017-07-31T23:57:37.020378+00:00                                      |
+| type                  | instance_network_interface                                            |
+| user_id               | adaa17ed0488400887c13558dd61d051                                      |
++-----------------------+-----------------------------------------------------------------------+
