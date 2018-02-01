@@ -3,8 +3,16 @@ from oslo_config import cfg
 
 from keystoneauth1.loading import conf as keystone_conf
 
-
 OPTS = [
+    cfg.IntOpt('interval', default=300,
+               help='Pull metric interval'),
+    cfg.IntOpt('pool_size', default=10,
+               help='Vsphere pool size'),
+    cfg.IntOpt('vm_num', default=10,
+               help='the number of vms when pulling metrics')
+]
+
+VMWARE_OPTS = [
     cfg.HostAddressOpt('host_ip',
                        default='127.0.0.1',
                        help='IP address of the VMware vSphere host.'),
@@ -45,4 +53,4 @@ OPTS = [
 def register_opts(conf):
     conf.register_opts(OPTS)
     keystone_conf.register_conf_options(conf, 'keystone_authtoken')
-    conf.register_opts(OPTS, 'vmware')
+    conf.register_opts(VMWARE_OPTS, 'vmware')
