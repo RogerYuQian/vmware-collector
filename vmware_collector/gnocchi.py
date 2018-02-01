@@ -6,10 +6,11 @@ from gnocchiclient import client
 from vmware_collector import nova
 from vmware_collector import keystone
 
-from vmware_collector import utils
-
 
 LOG = logging.getLogger(__name__)
+
+
+gnocchi_helper = None
 
 
 def get_gnocchiclient(conf):
@@ -26,42 +27,14 @@ class GnocchiHelper(object):
         self._resource_cache = {}
         self._instance_cache = {}
 
-    def handler_instance_stats(self, stats):
-        measures = {}
-        for instance_id, info in stats.items():
-            try:
-                measures.update(self._handle_instance_stat(instance_id, info))
-            except Exception:
-                LOG.warning('Can not handle %s', instance_id)
-        __import__('ipdb').set_trace()
-        self.client.metric.batch_resources_metrics_measures(
-                measures,
-                create_metrics=True)
-        LOG.info('Pushed measures for instance: %s', stats)
-
-    def _handle_instance_stat(self, instance_id, info):
-        metrics = {}
-        # handle instance resource
-        instance_resource = self.get_or_create_instance_resource(instance_id)
-        metrics[instance_resource['id']] = {
-            'cpu_util': [{
-                'value': info.get('cpu_util', 0),
-                'timestamp': utils.format_date(utils.now())
-            }],
-            'memory.usage': [{
-                'value': info.get('memory_usage', 0),
-        }
-        return metrics
-
-    def get_server_info(self, uuid):
-        server = self._instance_cache.get(uuid)
+    def get_server_info(self, instance_id):
+        server = self._instance_cache.get(instance_id)
         if not server:
-            server = self.novaclient.servers.get(uuid)
-            self._instance_cache[uuid] = server
+            server = self.novaclient.servers.get(instance_id)
+            self._instance_cache[instance_id] = server
         return server
 
-    def get_or_create_instance_resource(self, instance_id):
-
+    def get_instance_resource(self, instance_id):
         server = self.get_server_info(instance_id)
         params = {
             'id': server.id,
@@ -74,21 +47,25 @@ class GnocchiHelper(object):
         }
         return self._get_or_create_resource(instance_id, 'instance', params)
 
-    def get_or_create_instance_disk_resource(self, instance_id, name):
+    def get_instance_disk_resource(self, instance_id, name):
+        _id = '%s-%s' % (instance_id, name)
         params = {
+            'id': _id,
             'instance_id': instance_id,
             'name': name
         }
-        return self._get_or_create_resource(instance_id,
+        return self._get_or_create_resource(_id,
                                             'instance_disk',
                                             params)
 
-    def get_or_create_instance_network_resource(self, instance_id, name):
+    def get_instance_network_resource(self, instance_id, name):
+        _id = '%s-%s' % (instance_id, name)
         params = {
+            'id': _id,
             'instance_id': instance_id,
             'name': name
         }
-        return self._get_or_create_resource(instance_id,
+        return self._get_or_create_resource(_id,
                                             'instance_network_interface',
                                             params)
 
@@ -99,7 +76,15 @@ class GnocchiHelper(object):
             try:
                 res = self.client.resource.create(resource_type, params)
             except gnocchi_exc.ResourceAlreadyExists:
-                res = self.client.resource.get(resource_type, resource_id)
+                query = {
+                    "=": {
+                        "original_resource_id": resource_id
+                    }
+                }
+                res = self.client.resource.search(resource_type=resource_type,
+                                                  query=query)
+                if res:
+                    res = res[0]
             self._resource_cache[resource_id] = res
         return res
 
@@ -116,3 +101,10 @@ class GnocchiHelper(object):
                                             resource_id=instance_stat.uuid)
         resource[metric_name] = metric
         return metric
+
+
+def get_gnocchi_helper(conf):
+    global gnocchi_helper
+    if not gnocchi_helper:
+        gnocchi_helper = GnocchiHelper(conf)
+    return gnocchi_helper
