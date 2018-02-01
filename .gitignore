@@ -1,2 +1,3 @@
 .testrepository
 *.egg-info
+.eggs

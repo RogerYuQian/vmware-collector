@@ -1,7 +1,5 @@
-pyvmomi
-PrettyTable
-python-novaclient
-keystoneauth1
-
-oslo_messaging
 gnocchiclient
+keystoneauth1
+python-novaclient
+oslo_vmware
+oslo_config
