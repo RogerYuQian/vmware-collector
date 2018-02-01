@@ -56,7 +56,7 @@ class Manager(object):
             LOG.info('Update vm_objs to %s', vm_mobjs)
             # TODO add lock
             self.vm_mobjs[:] = vm_mobjs
-            time.sleep(3600)
+            time.sleep(self.conf.vm_cache_period)
 
     def query_vm_perf_stats(self, vm_mobjs):
 

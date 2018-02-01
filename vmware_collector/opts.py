@@ -9,7 +9,9 @@ OPTS = [
     cfg.IntOpt('pool_size', default=10,
                help='Vsphere pool size'),
     cfg.IntOpt('vm_num', default=10,
-               help='the number of vms when pulling metrics')
+               help='the number of vms when pulling metrics'),
+    cfg.IntOpt('vm_cache_period', default=600,
+               help='the period of the vm is cached')
 ]
 
 VMWARE_OPTS = [
