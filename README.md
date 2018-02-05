@@ -2,8 +2,9 @@
 
 Install this package and requirements
 
-    pip install vmware_collect
-    pip install -r requirements.txt
+    tar xvf vmware_collector-*.tar.gz
+    cd vmware_collector
+    pip install -c upper-constraints.txt .
 
 configure `/etc/vmware_collector/vmware_collector.conf` file
 
