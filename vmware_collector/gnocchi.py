@@ -5,6 +5,7 @@ from gnocchiclient import client
 
 from vmware_collector import nova
 from vmware_collector import keystone
+from vmware_collector import exceptions
 
 
 LOG = logging.getLogger(__name__)
@@ -85,6 +86,9 @@ class GnocchiHelper(object):
                                                   query=query)
                 if res:
                     res = res[0]
+                else:
+                    raise exceptions.ResourceNotFound(resource_id=resource_id,
+                                                      resource_type=resource_type)
             self._resource_cache[resource_id] = res
         return res
 
