@@ -6,11 +6,11 @@
 
 import sys
 import logging
-import time
-import threading
 import datetime
+import json
 
 from eventlet import greenpool
+from eventlet import greenthread
 from oslo_config import cfg
 
 from vmware_collector import opts
@@ -33,9 +33,7 @@ class Manager(object):
         self.insp = vmware.VsphereInspector(self.conf)
         LOG.info("Inspector is initialized.")
         self.vm_mobjs = []
-        update_thread = threading.Thread(target=self.get_vm_mobjs)
-        update_thread.daemon = True
-        update_thread.start()
+        greenthread.spawn(self.get_vm_mobjs)
 
     def get_all_nova_instance(self):
         return self.novaclient.servers.list()
@@ -43,7 +41,8 @@ class Manager(object):
     def get_vm_mobjs(self):
         while True:
             vm_mobjs = []
-            for instance in self.get_all_nova_instance():
+            instances = self.get_all_nova_instance()
+            for instance in instances:
                 vm_mobj = self.insp.get_vm_mobj(instance.id)
                 if not vm_mobj:
                     continue
@@ -53,10 +52,12 @@ class Manager(object):
                     LOG.debug('VM %s power state is off', vm_mobj)
                     continue
                 vm_mobjs.append(vm_mobj)
-            LOG.info('Update vm_objs to %s', vm_mobjs)
+            LOG.info('Update vm_objs to %s', [(vm.value, instance.id)
+                                              for vm, instance in
+                                              zip(vm_mobjs, instances)])
             # TODO add lock
             self.vm_mobjs[:] = vm_mobjs
-            time.sleep(self.conf.vm_cache_period)
+            greenthread.sleep(self.conf.vm_cache_period)
 
     def query_vm_perf_stats(self, vm_mobjs):
         pool = greenpool.GreenPool(self.conf.pool_size)
@@ -75,7 +76,7 @@ class Manager(object):
         LOG.info('Starting to pull metrics')
         stats = self.query_vm_perf_stats(self.vm_mobjs)
         measures = {}
-        LOG.info("Get stats: %s", stats)
+        LOG.info("Get stats: %s", json.dumps(stats))
         for instance_id, props in stats.items():
             for stat in objects.factory(self.conf, instance_id, props):
                 measures.update(stat.to_metric())
@@ -89,7 +90,7 @@ class Manager(object):
             try:
                 if not self.vm_mobjs:
                     LOG.info('No vm is found. sleep 10 seconds.')
-                    time.sleep(10)
+                    greenthread.sleep(10)
                     continue
                 start = utils.now()
                 self.run_once()
@@ -103,12 +104,12 @@ class Manager(object):
                 if time_left.total_seconds() > 0:
                     LOG.info('Sleep %s seconds to run next cycle',
                              time_left.total_seconds())
-                    time.sleep(time_left.total_seconds())
+                    greenthread.sleep(time_left.total_seconds())
                 else:
                     LOG.warning(('it takes too long to pull metrics then'
                                  ' interval, try to increase the interval'
                                  ' options'))
-                    time.sleep(10)
+                    greenthread.sleep(10)
             except KeyboardInterrupt:
                 LOG.info('Exiting')
                 break
@@ -126,4 +127,6 @@ def main():
 
 
 if __name__ == "__main__":
+    import urllib3
+    urllib3.disable_warnings()
     main()
