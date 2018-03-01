@@ -9,8 +9,8 @@ import logging
 import time
 import threading
 import datetime
-from multiprocessing.pool import ThreadPool
 
+from eventlet import greenpool
 from oslo_config import cfg
 
 from vmware_collector import opts
@@ -59,16 +59,16 @@ class Manager(object):
             time.sleep(self.conf.vm_cache_period)
 
     def query_vm_perf_stats(self, vm_mobjs):
-
-        pool = ThreadPool(self.conf.pool_size)
-        results = []
+        pool = greenpool.GreenPool(self.conf.pool_size)
+        rets = []
         stats = {}
         for sub_vms in utils.group(vm_mobjs, self.conf.vm_num):
-            ret = pool.apply_async(self.insp._query_vm_perf_stats,
-                                   (sub_vms, self.conf.interval))
-            results.append(ret)
-        for ret in results:
-            stats.update(ret.get(0xff))
+            ret = pool.spawn(self.insp._query_vm_perf_stats,
+                             sub_vms,
+                             self.conf.interval)
+            rets.append(ret)
+        for r in rets:
+            stats.update(r.wait())
         return stats
 
     def run_once(self):

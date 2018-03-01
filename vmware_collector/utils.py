@@ -1,4 +1,5 @@
 import datetime
+import six
 
 
 def now():
@@ -15,7 +16,7 @@ def group(eles, count):
         ret = []
         try:
             for i in range(count):
-                ret.append(itr.next())
+                ret.append(six.next(itr))
             yield ret
         except StopIteration:
             if ret:

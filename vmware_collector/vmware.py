@@ -1,9 +1,12 @@
+import logging
 from oslo_vmware import vim_util
 from oslo_utils import units
 
 PERF_MANAGER_TYPE = "PerformanceManager"
 PERF_COUNTER_PROPERTY = "perfCounter"
 VM_INSTANCE_ID_PROPERTY = 'config.extraConfig["nvp.vm-uuid"].value'
+
+LOG = logging.getLogger(__name__)
 
 # ESXi Servers sample performance data every 20 seconds. 20-second interval
 # data is called instance data or real-time data. To retrieve instance data,
