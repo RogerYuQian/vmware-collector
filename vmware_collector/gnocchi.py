@@ -6,6 +6,7 @@ from gnocchiclient import client
 from vmware_collector import nova
 from vmware_collector import keystone
 from vmware_collector import exceptions
+from vmware_collector import constants
 
 
 LOG = logging.getLogger(__name__)
@@ -34,6 +35,19 @@ class GnocchiHelper(object):
             server = self.novaclient.servers.get(instance_id)
             self._instance_cache[instance_id] = server
         return server
+
+    def get_resource(self, metric):
+        if metric.resource_type == constants.RT_INSTANCE:
+            resource = self.get_instance_resource(metric.instance_id)
+        elif metric.resource_type == constants.RT_INSTANCE_DISK:
+            resource = self.get_instance_disk_resource(metric.instance_id,
+                                                       metric.resource_name)
+        elif (metric.resource_type ==
+                constants.RT_INSTANCE_NETWORK_INTERFACE):
+            resource = self.get_instance_network_resource(
+                    metric.instance_id,
+                    metric.resource_name)
+        return resource
 
     def get_instance_resource(self, instance_id):
         server = self.get_server_info(instance_id)
@@ -87,8 +101,9 @@ class GnocchiHelper(object):
                 if res:
                     res = res[0]
                 else:
-                    raise exceptions.ResourceNotFound(resource_id=resource_id,
-                                                      resource_type=resource_type)
+                    raise exceptions.ResourceNotFound(
+                            resource_id=resource_id,
+                            resource_type=resource_type)
             self._resource_cache[resource_id] = res
         return res
 

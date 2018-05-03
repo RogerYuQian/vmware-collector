@@ -1,6 +1,7 @@
 import logging
 from oslo_vmware import vim_util
-from oslo_utils import units
+from vmware_collector import metrics
+from vmware_collector import objects
 
 PERF_MANAGER_TYPE = "PerformanceManager"
 PERF_COUNTER_PROPERTY = "perfCounter"
@@ -20,15 +21,6 @@ VC_REAL_TIME_SAMPLING_INTERVAL = 20
 
 
 vmware_api = None
-
-VC_AVERAGE_MEMORY_CONSUMED_CNTR = 'mem:consumed:average'
-VC_AVERAGE_CPU_CONSUMED_CNTR = 'cpu:usage:average'
-VC_NETWORK_RX_COUNTER = 'net:received:average'
-VC_NETWORK_TX_COUNTER = 'net:transmitted:average'
-VC_DISK_READ_RATE_CNTR = "disk:read:average"
-VC_DISK_READ_REQUESTS_RATE_CNTR = "disk:numberReadAveraged:average"
-VC_DISK_WRITE_RATE_CNTR = "disk:write:average"
-VC_DISK_WRITE_REQUESTS_RATE_CNTR = "disk:numberWriteAveraged:average"
 
 
 def get_api_session(conf):
@@ -66,6 +58,9 @@ class VsphereInspector(object):
         self._perf_counter_id_lookup_map = {}
 
         self._max_objects = 1000
+
+        metrics_class = metrics.load_metrics(self.conf)
+        self.metrics = [clazz(self) for clazz in metrics_class]
 
     def _init_vm_mobj_lookup_map(self):
         session = self._api_session
@@ -186,13 +181,7 @@ class VsphereInspector(object):
         session = self._api_session
         client_factory = session.vim.client.factory
 
-        metrics = [CPUMetric(self),
-                   RAMMetric(self),
-                   NetworkTXMetric(self),
-                   NetworkRXMetric(self),
-                   DiskReadMetric(self),
-                   DiskWriteMetric(self)]
-        metric_ids = [m.get_metric() for m in metrics]
+        metric_ids = [m.get_metric() for m in self.metrics]
 
         query_specs = []
         for vm_mobj in vm_mobjs:
@@ -212,144 +201,22 @@ class VsphereInspector(object):
         perf_stats = session.invoke_api(session.vim, 'QueryPerf', perf_manager,
                                         querySpec=query_specs)
 
-        stat_values = {}
+        measures = []
         if perf_stats:
             for entity_metric in perf_stats:
                 sample_infos = entity_metric.sampleInfo
                 vm_name = entity_metric.entity.value
-                nova_uuid = self.get_nova_instance_id(vm_name)
-                stat_values[nova_uuid] = {}
-                if len(sample_infos) > 0:
-                    for m in metrics:
-                        stat = m.handle_result(entity_metric)
-                        stat_values[nova_uuid].update(stat)
-        return stat_values
-
-
-class BaseMetric(object):
-    counter_name = VC_AVERAGE_CPU_CONSUMED_CNTR
-    instance = ''
-
-    def __init__(self, inspector):
-        self.inspector = inspector
-        self.counter_id = inspector.get_perf_counter_id(self.counter_name)
-
-    def get_metric(self):
-        session = self.inspector._api_session
-        client_factory = session.vim.client.factory
-
-        metric_id = client_factory.create('ns0:PerfMetricId')
-        metric_id.counterId = self.counter_id
-        metric_id.instance = self.instance
-        return metric_id
-
-    def handle_result(self, entity_metric):
-        stat = {}
-        for metric_series in entity_metric.value:
-            if metric_series.id.counterId != self.counter_id:
-                continue
-            # Take the average of all samples to improve the accuracy
-            # of the stat value and ignore -1 (bug 1639114)
-            filtered = [i for i in metric_series.value if i != -1]
-            if len(filtered) != 0:
-                stat_value = float(sum(filtered)) / len(filtered)
-            else:
-                stat_value = 0
-            device_id = metric_series.id.instance
-            stat[device_id] = stat_value
-        return stat
-
-
-class CPUMetric(BaseMetric):
-    def handle_result(self, entity_metric):
-        stat = super(CPUMetric, self).handle_result(entity_metric)
-        cpu_util = stat.pop(None, 0)
-        return {'cpu_util': float(cpu_util)/100}
-
-
-class RAMMetric(BaseMetric):
-    counter_name = VC_AVERAGE_MEMORY_CONSUMED_CNTR
-
-    def handle_result(self, entity_metric):
-        stat = super(RAMMetric, self).handle_result(entity_metric)
-        ram = stat.pop(None, 0)
-        return {'memory_usage': ram}
-
-
-class NetworkTXMetric(BaseMetric):
-    counter_name = VC_NETWORK_TX_COUNTER
-    instance = '*'
-
-    def handle_result(self, entity_metric):
-        stat = super(NetworkTXMetric, self).handle_result(entity_metric)
-        # For some device counters, in addition to the per device value
-        # the Performance manager also returns the aggregated value.
-        # Just to be consistent, deleting the aggregated value if present.
-        stat.pop(None, None)
-        # The sample for this map is: {4000: 0.0, vmnic5: 0.0, vmnic4: 0.0,
-        #               vmnic3: 0.0, vmnic2: 0.0, vmnic1: 0.0, vmnic0: 0.0}
-        # "4000" is the virtual nic which we need.
-        # And these "vmnic*" are phynical nics in the host, so we remove it
-        stat = {k: v for (k, v) in stat.items() if not k.startswith('vmnic')}
-        network_tx = {}
-        for vnic_id, value in stat.items():
-            network_tx[vnic_id] = value * units.Ki
-        return {'network.tx': network_tx}
-
-
-class NetworkRXMetric(BaseMetric):
-    counter_name = VC_NETWORK_RX_COUNTER
-    instance = '*'
-
-    def handle_result(self, entity_metric):
-        stat = super(NetworkRXMetric, self).handle_result(entity_metric)
-        # For some device counters, in addition to the per device value
-        # the Performance manager also returns the aggregated value.
-        # Just to be consistent, deleting the aggregated value if present.
-        stat.pop(None, None)
-        # The sample for this map is: {4000: 0.0, vmnic5: 0.0, vmnic4: 0.0,
-        #               vmnic3: 0.0, vmnic2: 0.0, vmnic1: 0.0, vmnic0: 0.0}
-        # "4000" is the virtual nic which we need.
-        # And these "vmnic*" are phynical nics in the host, so we remove it
-        stat = {k: v for (k, v) in stat.items()
-                if not k.startswith('vmnic')}
-        network_rx = {}
-        for vnic_id, value in stat.items():
-            network_rx[vnic_id] = value * units.Ki
-        return {'network.rx': network_rx}
-
-
-class DiskReadMetric(BaseMetric):
-    counter_name = VC_DISK_READ_RATE_CNTR
-    instance = '*'
-
-    def handle_result(self, entity_metric):
-        stat = super(DiskReadMetric, self).handle_result(entity_metric)
-        # For some device counters, in addition to the per device value
-        # the Performance manager also returns the aggregated value.
-        # Just to be consistent, deleting the aggregated value if present.
-        stat.pop(None, None)
-        disk_read = {}
-        # Stats provided from vSphere are in KB/s, converting it to B/s.
-        for key in stat:
-            value = stat.get(key, 0) * units.Ki
-            disk_read[key] = value
-        return {'disk.read': disk_read}
-
-
-class DiskWriteMetric(BaseMetric):
-    counter_name = VC_DISK_WRITE_RATE_CNTR
-    instance = '*'
-
-    def handle_result(self, entity_metric):
-        stat = super(DiskWriteMetric, self).handle_result(entity_metric)
-        # For some device counters, in addition to the per device value
-        # the Performance manager also returns the aggregated value.
-        # Just to be consistent, deleting the aggregated value if present.
-        stat.pop(None, None)
-        disk_write = {}
-        # Stats provided from vSphere are in KB/s, converting it to B/s.
-        for key in stat:
-            value = stat.get(key, 0) * units.Ki
-            disk_write[key] = value
-        return {'disk.write': disk_write}
+                instance_id = self.get_nova_instance_id(vm_name)
+                if not sample_infos or len(sample_infos) == 0:
+                    continue
+                for m in self.metrics:
+                    data = m.handle_result(entity_metric)
+                    for name, value in data:
+                        measure = objects.ReousrceMetric(
+                            instance_id,
+                            m.gnocchi_metric_name,
+                            value,
+                            resource_name=name,
+                            resource_type=m.gnocchi_resource_type)
+                        measures.append(measure)
+        return measures

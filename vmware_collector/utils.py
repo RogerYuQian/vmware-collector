@@ -1,3 +1,4 @@
+import json
 import datetime
 import six
 
@@ -7,7 +8,7 @@ def now():
 
 
 def format_date(date):
-    return date.strftime('%Y-%m-%dT%H:%M:%d')
+    return date.strftime('%Y-%m-%dT%H:%M:%S')
 
 
 def group(eles, count):
@@ -22,3 +23,16 @@ def group(eles, count):
             if ret:
                 yield ret
             raise StopIteration
+
+
+class DatetimeEncoder(json.JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, datetime.datetime):
+            return format_date(obj)
+        return json.JSONEncoder.default(self, obj)
+
+
+def json_dumps(*args, **kwargs):
+    kwargs['cls'] = DatetimeEncoder
+    return json.dumps(*args, **kwargs)

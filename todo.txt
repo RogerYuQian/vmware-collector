@@ -1,0 +1,7 @@
+pool_size + vm num + metric 与 vmware 那边的关系 
+分盘的数据采集
+
+disk 使用 id = <instance_id>_<disk_id>
+net id = <port_id>
+
+日志 -> 写文件
