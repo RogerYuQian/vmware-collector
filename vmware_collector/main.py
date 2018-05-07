@@ -6,12 +6,12 @@
 
 import collections
 import datetime
-import logging
 import sys
 
 from eventlet import greenpool
 from eventlet import greenthread
 from oslo_config import cfg
+from oslo_log import log
 
 from vmware_collector.common import opts
 from vmware_collector.common import utils
@@ -20,7 +20,7 @@ from vmware_collector.services import nova
 from vmware_collector.services import vmware
 
 
-LOG = logging.getLogger(__name__)
+LOG = log.getLogger(__name__)
 
 
 class Manager(object):
@@ -154,9 +154,12 @@ class Manager(object):
 def main():
     conf = cfg.ConfigOpts()
     opts.register_opts(conf)
+    log.register_options(conf)
+    log.set_defaults()
     conf(sys.argv[1:])
+    log.setup(conf, 'vmware_collector')
+
     manager = Manager(conf)
-    logging.basicConfig(level=logging.INFO)
     manager.run()
 
 

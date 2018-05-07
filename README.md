@@ -10,6 +10,7 @@ configure `/etc/vmware_collector/vmware_collector.conf` file
 
     [DEFAULT]
     interval=10
+    log_dir = /var/log/vmware_collector
 
     [vmware]
     host_ip=192.168.22.171
