@@ -2,7 +2,7 @@
 
 from novaclient import client
 
-from vmware_collector import keystone
+from vmware_collector.services import keystone
 
 
 def get_nova_client(conf, api_version='2.29'):

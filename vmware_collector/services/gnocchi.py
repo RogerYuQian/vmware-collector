@@ -1,12 +1,12 @@
 import logging
 
-from gnocchiclient import exceptions as gnocchi_exc
 from gnocchiclient import client
+from gnocchiclient import exceptions as gnocchi_exc
 
-from vmware_collector import nova
-from vmware_collector import keystone
-from vmware_collector import exceptions
-from vmware_collector import constants
+from vmware_collector.common import constants
+from vmware_collector.common import exceptions
+from vmware_collector.services import keystone
+from vmware_collector.services import nova
 
 
 LOG = logging.getLogger(__name__)

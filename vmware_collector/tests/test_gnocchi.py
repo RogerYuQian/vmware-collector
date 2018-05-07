@@ -1,5 +1,5 @@
 from vmware_collector.tests import base as test_base
-from vmware_collector import gnocchi
+from vmware_collector.services import gnocchi
 
 from gnocchiclient import exceptions as gnocchi_exc
 

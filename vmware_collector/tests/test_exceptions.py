@@ -1,5 +1,5 @@
+from vmware_collector.common import exceptions
 from vmware_collector.tests import base as base_test
-from vmware_collector import exceptions
 
 
 class CollectorExceptionTest(base_test.BaseTestCase):

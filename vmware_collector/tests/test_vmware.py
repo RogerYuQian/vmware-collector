@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 import unittest
 
-from vmware_collector import vmware
+from vmware_collector.services import vmware
 from vmware_collector.tests import base as test_base
 
 

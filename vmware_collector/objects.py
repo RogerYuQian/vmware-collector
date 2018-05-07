@@ -1,5 +1,5 @@
-from vmware_collector import utils
-from vmware_collector import constants
+from vmware_collector.common import constants
+from vmware_collector.common import utils
 
 
 RES_TYPE_INSTANCE = 'instance'

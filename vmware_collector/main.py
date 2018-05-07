@@ -5,19 +5,19 @@
 # push statics to mq
 
 import collections
-import sys
-import logging
 import datetime
+import logging
+import sys
 
 from eventlet import greenpool
 from eventlet import greenthread
 from oslo_config import cfg
 
-from vmware_collector import opts
-from vmware_collector import nova
-from vmware_collector import vmware
-from vmware_collector import utils
-from vmware_collector import gnocchi
+from vmware_collector.common import opts
+from vmware_collector.common import utils
+from vmware_collector.services import gnocchi
+from vmware_collector.services import nova
+from vmware_collector.services import vmware
 
 
 LOG = logging.getLogger(__name__)

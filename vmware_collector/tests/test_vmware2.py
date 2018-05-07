@@ -5,7 +5,7 @@ import pprint
 from oslo_config import cfg
 
 from vmware_collector import vmware2
-from vmware_collector import opts
+from vmware_collector.common import opts
 
 CUR_DIR = os.path.dirname(os.path.abspath(__file__))
 

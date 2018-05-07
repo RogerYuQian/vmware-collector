@@ -2,7 +2,7 @@ import os
 from oslo_config import cfg
 import unittest
 
-from vmware_collector import opts
+from vmware_collector.common import opts
 
 
 CUR_DIR = os.path.dirname(os.path.abspath(__file__))

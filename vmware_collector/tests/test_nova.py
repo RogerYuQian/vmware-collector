@@ -1,6 +1,6 @@
 import unittest
 
-from vmware_collector import nova
+from vmware_collector.services import nova
 from vmware_collector.tests import base as test_base
 
 
