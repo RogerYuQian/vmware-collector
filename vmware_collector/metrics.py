@@ -1,4 +1,5 @@
 from oslo_utils import units
+from vmware_collector.services import neutron
 
 
 VC_AVERAGE_MEMORY_CONSUMED_CNTR = 'mem:consumed:average'
@@ -16,7 +17,8 @@ class BaseMetric(object):
     instance = ''
     gnocchi_resource_type = None
 
-    def __init__(self, inspector):
+    def __init__(self, conf, inspector):
+        self.conf = conf
         self.inspector = inspector
         self.counter_id = inspector.get_perf_counter_id(self.counter_name)
 
@@ -85,10 +87,10 @@ class NetworkTXMetric(BaseMetric):
         # "4000" is the virtual nic which we need.
         # And these "vmnic*" are phynical nics in the host, so we remove it
         stat = {k: v for (k, v) in stat.items() if not k.startswith('vmnic')}
-        network_tx = {}
-        for vnic_id, value in stat.items():
-            network_tx[vnic_id] = value * units.Ki
-            yield vnic_id, value * units.Ki
+        devices = self.inspector.get_hardware_device(entity_metric)
+        stat = _change_key2port(self.conf, stat, devices)
+        for port_id, value in stat.items():
+            yield port_id, value * units.Ki
 
 
 class NetworkRXMetric(BaseMetric):
@@ -109,8 +111,10 @@ class NetworkRXMetric(BaseMetric):
         # And these "vmnic*" are phynical nics in the host, so we remove it
         stat = {k: v for (k, v) in stat.items()
                 if not k.startswith('vmnic')}
-        for vnic_id, value in stat.items():
-            yield vnic_id, value * units.Ki
+        devices = self.inspector.get_hardware_device(entity_metric)
+        stat = _change_key2port(self.conf, stat, devices)
+        for port_id, value in stat.items():
+            yield port_id, value * units.Ki
 
 
 class DiskReadMetric(BaseMetric):
@@ -162,3 +166,23 @@ def load_metrics(conf):
             invoke_on_load=False)
 
     return [e.plugin for e in mgr]
+
+
+def _change_key2port(conf, stat, devices):
+    ''' Replace the NIC number with the port id
+    {'4000': 0.0}
+    to
+    {'40c99f28-16c1-4c18-8be4-b33511f737d9': 0.0}
+    '''
+
+    result = {}
+    for device in devices:
+        if str(device.key) in stat:
+            port = neutron.get_port_by_mac(conf, device.macAddress)
+            if port == []:
+                LOG.warning("Can't find the port information with "
+                            "this mac: %s" % device.mac_address)
+                result[str(device.key)] = stat[str(device.key)]
+            else:
+                result[port[0]['id']] = stat[str(device.key)]
+    return result

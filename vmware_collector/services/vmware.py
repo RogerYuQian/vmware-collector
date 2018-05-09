@@ -60,7 +60,7 @@ class VsphereInspector(object):
         self._max_objects = 1000
 
         metrics_class = metrics.load_metrics(self.conf)
-        self.metrics = [clazz(self) for clazz in metrics_class]
+        self.metrics = [clazz(self.conf, self) for clazz in metrics_class]
 
     def _init_vm_mobj_lookup_map(self):
         session = self._api_session
@@ -93,6 +93,18 @@ class VsphereInspector(object):
             for uuid, vm_mobj in self._vm_mobj_lookup_map.items():
                 self._vm_name_lookup_map[vm_mobj.value] = uuid
         return self._vm_name_lookup_map.get(vm_name, None)
+
+    def get_hardware_device(self, entity_metric):
+        session = self._api_session
+        properties = ["config.hardware.device"]
+        vm_instance_id = self.get_nova_instance_id(
+            entity_metric.entity.value)
+        vm_ref = self.get_vm_mobj(vm_instance_id)
+        props = session.invoke_api(vim_util, "get_object_properties_dict",
+                                   session.vim, vm_ref,
+                                   properties)
+        devices = props[properties[0]].VirtualDevice
+        return devices
 
     def _init_perf_counter_id_lookup_map(self):
 
