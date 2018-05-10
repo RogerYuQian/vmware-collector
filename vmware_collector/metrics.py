@@ -6,10 +6,8 @@ VC_AVERAGE_MEMORY_CONSUMED_CNTR = 'mem:consumed:average'
 VC_AVERAGE_CPU_CONSUMED_CNTR = 'cpu:usage:average'
 VC_NETWORK_RX_COUNTER = 'net:received:average'
 VC_NETWORK_TX_COUNTER = 'net:transmitted:average'
-VC_DISK_READ_RATE_CNTR = "disk:read:average"
-VC_DISK_READ_REQUESTS_RATE_CNTR = "disk:numberReadAveraged:average"
-VC_DISK_WRITE_RATE_CNTR = "disk:write:average"
-VC_DISK_WRITE_REQUESTS_RATE_CNTR = "disk:numberWriteAveraged:average"
+VC_VIRTUAL_DISK_READ_RATE_CNTR = "virtualDisk:read:average"
+VC_VIRTUAL_DISK_WRITE_RATE_CNTR = "virtualDisk:write:average"
 
 
 class BaseMetric(object):
@@ -118,7 +116,7 @@ class NetworkRXMetric(BaseMetric):
 
 
 class DiskReadMetric(BaseMetric):
-    counter_name = VC_DISK_READ_RATE_CNTR
+    counter_name = VC_VIRTUAL_DISK_READ_RATE_CNTR
     instance = '*'
     gnocchi_resource_type = 'instance_disk'
     gnocchi_metric_name = 'disk.device.read.bytes.rate'
@@ -136,7 +134,7 @@ class DiskReadMetric(BaseMetric):
 
 
 class DiskWriteMetric(BaseMetric):
-    counter_name = VC_DISK_WRITE_RATE_CNTR
+    counter_name = VC_VIRTUAL_DISK_WRITE_RATE_CNTR
     instance = '*'
     gnocchi_resource_type = 'instance_disk'
     gnocchi_metric_name = 'disk.device.write.bytes.rate'
