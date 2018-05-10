@@ -1,13 +1,16 @@
-import logging
+from oslo_log import log
 from oslo_vmware import vim_util
+
 from vmware_collector import metrics
 from vmware_collector import objects
+from vmware_collector.common.localcache import mem_cache
+
 
 PERF_MANAGER_TYPE = "PerformanceManager"
 PERF_COUNTER_PROPERTY = "perfCounter"
 VM_INSTANCE_ID_PROPERTY = 'config.extraConfig["nvp.vm-uuid"].value'
 
-LOG = logging.getLogger(__name__)
+LOG = log.getLogger(__name__)
 
 # ESXi Servers sample performance data every 20 seconds. 20-second interval
 # data is called instance data or real-time data. To retrieve instance data,
@@ -94,6 +97,7 @@ class VsphereInspector(object):
                 self._vm_name_lookup_map[vm_mobj.value] = uuid
         return self._vm_name_lookup_map.get(vm_name, None)
 
+    @mem_cache(3600, 'device', 1000000)
     def get_hardware_device(self, entity_metric):
         session = self._api_session
         properties = ["config.hardware.device"]

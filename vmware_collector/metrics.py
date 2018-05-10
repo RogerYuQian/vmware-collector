@@ -1,6 +1,11 @@
+import re
+
+from oslo_log import log
 from oslo_utils import units
 from vmware_collector.services import neutron
 
+
+LOG = log.getLogger(__name__)
 
 VC_AVERAGE_MEMORY_CONSUMED_CNTR = 'mem:consumed:average'
 VC_AVERAGE_CPU_CONSUMED_CNTR = 'cpu:usage:average'
@@ -9,6 +14,7 @@ VC_NETWORK_TX_COUNTER = 'net:transmitted:average'
 VC_VIRTUAL_DISK_READ_RATE_CNTR = "virtualDisk:read:average"
 VC_VIRTUAL_DISK_WRITE_RATE_CNTR = "virtualDisk:write:average"
 
+UUID_RE = (r'[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}')
 
 class BaseMetric(object):
     counter_name = None
@@ -127,6 +133,8 @@ class DiskReadMetric(BaseMetric):
         # the Performance manager also returns the aggregated value.
         # Just to be consistent, deleting the aggregated value if present.
         stat.pop(None, None)
+        devices = self.inspector.get_hardware_device(entity_metric)
+        stat = _change_dev2vol(self.conf, stat, devices)
         # Stats provided from vSphere are in KB/s, converting it to B/s.
         for key in stat:
             value = stat.get(key, 0) * units.Ki
@@ -145,6 +153,8 @@ class DiskWriteMetric(BaseMetric):
         # the Performance manager also returns the aggregated value.
         # Just to be consistent, deleting the aggregated value if present.
         stat.pop(None, None)
+        devices = self.inspector.get_hardware_device(entity_metric)
+        stat = _change_dev2vol(self.conf, stat, devices)
         # Stats provided from vSphere are in KB/s, converting it to B/s.
         for key in stat:
             value = stat.get(key, 0) * units.Ki
@@ -183,4 +193,98 @@ def _change_key2port(conf, stat, devices):
                 result[str(device.key)] = stat[str(device.key)]
             else:
                 result[port[0]['id']] = stat[str(device.key)]
+    return result
+
+
+def _change_dev2vol(conf, stat, devices):
+    ''' Replace the device number with the volume id
+    {'scsi0:0': 0.0} or {'ide0:0': 0.0}
+    to
+    {'92d391a0-78da-4f9d-8007-bec3947775e7': 0.0}
+    '''
+
+    result = {}
+    key_map = {device.key: index for index, device in enumerate(devices)}
+
+    # ------------------------------------------------------------
+    # |label: IDE 0                                              |
+    # |  device type    : vim.vm.device.VirtualIDEController     |
+    # |  backing type   : NoneType                               |
+    # |  key            : 200                                    |
+    # |  summary        : IDE 0                                  |
+    # |----------------------------------------------------------|
+    # |label: SCSI controller 0                                  |
+    # |  device type    : vim.vm.device.VirtualLsiLogicController|
+    # |  backing type   : NoneType                               |
+    # |  key            : 1000                                   |
+    # |  summary        : LSI Logic                              |
+    # ------------------------------------------------------------
+    # TODO (The controller cannot be created in openstack,
+    #       so the default controller <SCSI 0/IDE 0> is fixed here)
+    ide_device_key_map = (devices[key_map[200]].device if key_map.get(200)
+                          is not None else [])
+    scsi_device_key_map = (devices[key_map[1000]].device if key_map.get(1000)
+                           is not None else [])
+
+    def _regular_search(fileName):
+        result = re.search(UUID_RE, fileName, re.IGNORECASE)
+        if not result:
+            LOG.warning('There is no uuid format string in filename: %s' %
+                        fileName)
+            return result
+        else:
+            return result.group()
+
+    # Return value:
+    # --------------------------------------------
+    # | Value | Description                      |
+    # |------------------------------------------|
+    # | None  | We don't process the raw data    |
+    # |'root' | Mark root disk                   |
+    # | uuid  | Volume id in Openstack           |
+    # --------------------------------------------
+    def _parse_backing_filename(device):
+        if device.deviceInfo['label'] == 'Hard disk 1':
+            LOG.debug('The current device is Root Disk')
+            fileName = device.backing.fileName
+            if 'volume' in fileName:
+                LOG.debug('The root disk is mounted from openstack')
+                volume_id = _regular_search(fileName) or 'root'
+                return volume_id
+            else:
+                return 'root'
+        elif 'CD/DVD drive' not in device.deviceInfo['label']:
+            LOG.debug('The current device is VirtualDisk')
+            fileName = device.backing.fileName
+            if 'volume' in fileName:
+                LOG.debug('The current device is VirtualDisk '
+                          'mounted from openstack, the fileName is %s' %
+                          fileName)
+                volume_id = _regular_search(fileName)
+                return volume_id
+            else:
+                LOG.warning('The current device is VirtualDisk '
+                            'mounted from vmware, the fileName is %s' %
+                            fileName)
+                return None
+        return None
+
+    def _combined_port_number(type, unitNumber):
+        type_map = {"scsi": "scsi0:",
+                    "ide": "ide0:"}
+        return type_map[type] + str(unitNumber)
+
+    for device_key in (ide_device_key_map + scsi_device_key_map):
+        device = devices[key_map[device_key]]
+        volume_id = _parse_backing_filename(device)
+        if volume_id:
+            device_type = 'ide' if device_key in ide_device_key_map else 'scsi'
+            stat_key = _combined_port_number(
+                device_type, devices[key_map[device_key]].unitNumber)
+            result[volume_id] = stat[stat_key]
+        # We don't process the raw data
+        else:
+            LOG.warning('We do not process the raw data, the fileName in '
+                        'vmware is %s' % device.backing.fileName)
+            result = stat
     return result

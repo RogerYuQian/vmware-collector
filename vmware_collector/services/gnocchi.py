@@ -1,4 +1,4 @@
-import logging
+from oslo_log import log
 
 from gnocchiclient import client
 from gnocchiclient import exceptions as gnocchi_exc
@@ -9,7 +9,7 @@ from vmware_collector.services import keystone
 from vmware_collector.services import nova
 
 
-LOG = logging.getLogger(__name__)
+LOG = log.getLogger(__name__)
 
 
 gnocchi_helper = None
