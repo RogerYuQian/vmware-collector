@@ -26,7 +26,6 @@ LOG = log.getLogger(__name__)
 class Manager(object):
     def __init__(self, conf):
         self.conf = conf
-        self.novaclient = nova.get_nova_client(conf)
         self.gnocchi_helper = gnocchi.get_gnocchi_helper(conf)
         LOG.info("Initializing inspector.")
         self.insp = vmware.VsphereInspector(self.conf)
@@ -34,13 +33,10 @@ class Manager(object):
         self.vm_mobjs = []
         greenthread.spawn(self.get_vm_mobjs)
 
-    def get_all_nova_instance(self):
-        return self.novaclient.servers.list()
-
     def get_vm_mobjs(self):
         while True:
             vm_mobjs = []
-            instances = self.get_all_nova_instance()
+            instances = nova.get_all_instances(self.conf)
             for instance in instances:
                 vm_mobj = self.insp.get_vm_mobj(instance.id)
                 if not vm_mobj:
