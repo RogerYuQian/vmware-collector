@@ -52,8 +52,21 @@ VMWARE_OPTS = [
                     'work-arounds.'),
 ]
 
+COORDINATION_OPTS = [
+    cfg.StrOpt('backend_url',
+                help='The backend URL to use for distributed coordination. If '
+                'left empty, per-deployment central agent and per-host '
+                'compute agent won\'t do workload '
+                'partitioning and will only function correctly if a '
+                'single instance of that service is running.'),
+    cfg.IntOpt('sync_rate',
+               default=30,
+               help='Coordinator listening period'),
+]
+
 
 def register_opts(conf):
     conf.register_opts(OPTS)
     keystone_conf.register_conf_options(conf, 'keystone_authtoken')
     conf.register_opts(VMWARE_OPTS, 'vmware')
+    conf.register_opts(COORDINATION_OPTS, 'coordination')
