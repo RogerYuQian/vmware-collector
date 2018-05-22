@@ -39,13 +39,20 @@ class VmScheduler(object):
     def __init__(self, conf, manager):
         self.conf = conf
         self.manager = manager
-        self.coordinator, self.current_id = utils.get_coordinator_and_start(
-            conf.coordination.backend_url)
         self.sync_rate = conf.coordination.sync_rate
         self.index = 0
-        self.members_num = 0
+        self.members_num = 1
+        if conf.coordination.backend_url is not None:
+            LOG.warning("Connrdination's backend_url is not configured"
+                        " and cannot collect data from multiple processes")
+            self.coordinator, self.current_id = (
+                utils.get_coordinator_and_start(conf.coordination.backend_url))
+        else:
+            # NOTE: If the conf.coordination.backend_url is not configured,
+            #it is necessary to ensure that the process can proceed smoothly.
+            self.current_id = utils.current_id()
 
-    def _get_vm_mobjs(self, current_index, members_num):
+    def _get_vm_sch_mobjs(self, current_index, members_num):
         """Get vms and distribute them evenly"""
         vm_mobjs = []
         instances_id = []
@@ -155,7 +162,7 @@ class VmScheduler(object):
                       ' administrator to handle this issue')
             raise
         else:
-            return self._get_vm_mobjs(self.index, self.members_num)
+            return self._get_vm_sch_mobjs(self.index, self.members_num)
 
 
 class Manager(object):
@@ -167,7 +174,8 @@ class Manager(object):
         LOG.info("Inspector is initialized.")
         self.vm_mobjs = []
         self.vm_scheduler = VmScheduler(conf, self)
-        self.vm_scheduler.configure()
+        if conf.coordination.backend_url is not None:
+            self.vm_scheduler.configure()
         greenthread.spawn(self._get_vm_mobjs)
 
     def get_vm_mobjs(self):

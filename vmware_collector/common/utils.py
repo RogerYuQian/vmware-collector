@@ -47,6 +47,10 @@ def json_dumps(*args, **kwargs):
     return json.dumps(*args, **kwargs)
 
 
+def current_id():
+    return "%s.%s" % (socket.gethostname(),
+                      str(uuid.uuid4()))
+
 # Retry with exponential backoff for up to 1 minute
 retry = tenacity.retry(
     wait=tenacity.wait_exponential(multiplier=0.5, max=60),
@@ -65,11 +69,10 @@ def _enable_coordination(coord):
 
 
 def get_coordinator_and_start(url):
-    current_id = "%s.%s" % (socket.gethostname(),
-                            str(uuid.uuid4()))
-    coord = coordination.get_coordinator(url, current_id)
+    cur_id = current_id()
+    coord = coordination.get_coordinator(url, cur_id)
     _enable_coordination(coord)
-    return coord, current_id
+    return coord, cur_id
 
 
 def uuid2int(uuid):
