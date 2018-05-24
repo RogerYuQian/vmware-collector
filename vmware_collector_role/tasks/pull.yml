@@ -1,0 +1,9 @@
+---
+- name: Pulling vmware_collector image
+  kolla_docker:
+    action: "pull_image"
+    common_options: "{{ docker_common_options }}"
+    image: "{{ vmware_collector.image }}"
+  when:
+    - vmware_collector.enabled | bool
+    - inventory_hostname in groups[vmware_collector.group]

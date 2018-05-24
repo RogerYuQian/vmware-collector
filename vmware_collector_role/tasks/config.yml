@@ -1,0 +1,51 @@
+---
+- name: Ensuring config directories exist
+  file:
+    path: "{{ node_config_directory }}/vmware_collector"
+    state: "directory"
+    mode: "0770"
+  become: true
+  when:
+    - vmware_collector.enabled | bool
+    - inventory_hostname in groups[vmware_collector.group]
+
+- name: Copying over config.json files for services
+  template:
+    src: "vmware_collector.json.j2"
+    dest: "{{ node_config_directory }}/vmware_collector/config.json"
+    mode: "0770"
+  become: true
+  register: config_jsons
+  when:
+    - vmware_collector.enabled | bool
+    - inventory_hostname in groups[vmware_collector.group]
+  notify:
+    - Restart vmware_collector container
+
+- name: Copying vmware_collector.conf file
+  merge_configs:
+    sources:
+      - "{{ role_path }}/templates/vmware_collector.conf.j2"
+      - "{{ node_custom_config }}/vmware_collector.conf"
+    dest: "{{ node_config_directory }}/vmware_collector/vmware_collector.conf"
+    mode: "0660"
+  become: true
+  when:
+    - vmware_collector.enabled | bool
+    - inventory_hostname in groups[vmware_collector.group]
+  notify:
+    - Restart vmware_collector container
+
+- name: Check vmware_collector container
+  kolla_docker:
+    action: "compare_container"
+    common_options: "{{ docker_common_options }}"
+    name: "{{ vmware_collector.container_name }}"
+    image: "{{ vmware_collector.image }}"
+    volumes: "{{ vmware_collector.volumes }}"
+  when:
+    - action != "config"
+    - vmware_collector.enabled | bool
+    - inventory_hostname in groups[vmware_collector.group]
+  notify:
+    - Restart vmware_collector container

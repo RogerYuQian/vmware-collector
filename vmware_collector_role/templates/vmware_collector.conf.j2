@@ -1,0 +1,27 @@
+[DEFAULT]
+interval = 60
+log_dir = /var/log/kolla/vmware_collector
+metrics = cpu,ram,network_tx,network_rx,disk_read,disk_write
+
+[vmware]
+host_ip = {{ vmware_vcenter_host_ip }}
+host_port = {{ vmware_vcenter_host_port }}
+host_username = {{ vmware_vcenter_host_username }}
+host_password = {{ vmware_vcenter_host_password }}
+insecure = {{ vmware_vcenter_insecure }}
+
+[keystone_authtoken]
+auth_type = password
+auth_url = {{ admin_protocol }}://{{ kolla_internal_fqdn }}:{{ keystone_admin_port }}
+project_name = admin
+project_domain_name = {{ default_project_domain_name }}
+username = admin
+user_domain_name = {{ default_user_domain_name }}
+password = {{ keystone_admin_password }}
+
+[coordination]
+{% if enable_redis | bool %}
+backend_url = redis://{% for host in groups['redis'] %}{% if host == groups['redis'][0] %}admin:{{ redis_master_password }}@{{ hostvars[host]['ansible_' + hostvars[host]['api_interface']]['ipv4']['address'] }}:{{ redis_sentinel_port }}?sentinel=kolla{% else %}&sentinel_fallback={{ hostvars[host]['ansible_' + hostvars[host]['api_interface']]['ipv4']['address'] }}:{{ redis_sentinel_port }}{% endif %}{% endfor %}&db=0&socket_timeout=60&retry_on_timeout=yes
+{% elif enable_memcached | bool %}
+backend_url = memcached://{% for host in groups['memcached'] %}{{ hostvars[host]['ansible_' + hostvars[host]['api_interface']]['ipv4']['address'] }}:{{ memcached_port }}{% if not loop.last %},{% endif %}{% endfor %}
+{% endif %}

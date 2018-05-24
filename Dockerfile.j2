@@ -1,0 +1,27 @@
+FROM {{ namespace }}/{{ image_prefix }}openstack-base:{{ tag }}
+LABEL maintainer="{{ maintainer }}" name="{{ image_name }}" build-date="{{ build_date }}"
+
+{% block vmware_collector_header %}{% endblock %}
+
+{% import "macros.j2" as macros with context %}
+
+{% if install_type == 'binary' %}
+
+RUN echo 'Binary is not supported' \
+    && false
+
+{% else %}
+
+ADD . /vmware_collector
+
+{% set vmware_collector_pip_packages = [
+    '/vmware_collector'
+] %}
+
+RUN {{ macros.install_pip(vmware_collector_pip_packages | customizable("pip_packages")) }}
+
+{% endif %}
+
+COPY extend_start.sh /usr/local/bin/kolla_vmware_collector_extend_start
+
+RUN chmod +x /usr/local/bin/kolla_vmware_collector_extend_start

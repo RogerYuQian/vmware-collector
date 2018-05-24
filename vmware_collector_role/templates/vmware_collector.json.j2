@@ -1,0 +1,12 @@
+{
+    "command": "vmware-collector --config-file /etc/vmware_collector/vmware_collector.conf",
+    "config_files": [
+        {
+            "source": "{{ container_config_directory }}/vmware_collector.conf",
+            "dest": "/etc/vmware_collector/vmware_collector.conf",
+            "owner": "root",
+            "perm": "0600"
+        }
+    ]
+}
+

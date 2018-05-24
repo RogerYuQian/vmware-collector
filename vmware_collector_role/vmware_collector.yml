@@ -1,0 +1,4 @@
+- hosts:
+    - vmware_collector
+  roles:
+    - vmware_collector_role

@@ -1,0 +1,23 @@
+---
+project_name: vmware_collector
+vmware_vcenter_host_port: "443"
+
+vmware_collector:
+  container_name: vmware_collector
+  group: "{{ 'vmware_collector' if 'vmware_collector' in groups else 'control' }}"
+  enabled: true
+  image: "{{ vmware_collector_image_full }}"
+  volumes:
+    - "{{ node_config_directory }}/vmware_collector:{{ container_config_directory }}/:ro"
+    - "/etc/localtime:/etc/localtime:ro"
+    - "kolla_logs:/var/log/kolla/"
+
+
+####################
+# Docker
+####################
+vmware_collector_install_type: "{{ kolla_install_type }}"
+
+vmware_collector_image: "{{ docker_registry ~ '/' if docker_registry else '' }}{{ docker_namespace }}/{{ kolla_base_distro }}-{{ vmware_collector_install_type }}-vmware_collector"
+vmware_collector_tag: "{{ openstack_release }}"
+vmware_collector_image_full: "{{ vmware_collector_image }}:{{ vmware_collector_tag }}"

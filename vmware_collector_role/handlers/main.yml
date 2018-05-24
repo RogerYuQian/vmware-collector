@@ -1,0 +1,9 @@
+- name: Restart vmware_collector container
+  kolla_docker:
+    action: "recreate_or_restart_container"
+    common_options: "{{ docker_common_options }}"
+    name: "{{ vmware_collector.container_name }}"
+    image: "{{ vmware_collector.image }}"
+    volumes: "{{ vmware_collector.volumes }}"
+  when:
+    - action != "config"
