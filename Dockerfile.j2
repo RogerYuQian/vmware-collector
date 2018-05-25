@@ -22,6 +22,6 @@ RUN {{ macros.install_pip(vmware_collector_pip_packages | customizable("pip_pack
 
 {% endif %}
 
-COPY extend_start.sh /usr/local/bin/kolla_vmware_collector_extend_start
+COPY extend_start.sh /usr/local/bin/kolla_extend_start
 
-RUN chmod +x /usr/local/bin/kolla_vmware_collector_extend_start
+RUN chmod +x /usr/local/bin/kolla_extend_start

@@ -1,6 +1,8 @@
 gnocchiclient
 keystoneauth1
-python-novaclient
 oslo_vmware
 oslo_config
 oslo_log
+pymemcache
+python-novaclient
+tooz
