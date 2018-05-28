@@ -1,0 +1,62 @@
+## vmware_collector features
+
+* [Multi checkers](#checkers)
+* [Multi actions](#actions)
+* [Support cold backup nodes](#cold-backup-nodes)
+
+## Simple usage
+
+configure `/etc/vmware_collector/vmware_collector.conf`
+
+    [DEFAULT]
+    interval=60
+    log_dir = /var/log/vmware_collector
+
+    metrics=cpu,ram,network_tx,network_rx,disk_read,disk_write
+
+    [vmware]
+    host_ip=192.168.22.171
+    host_port=443
+    host_username=administrator@vsphere.local
+    host_password=99Cloud!@#
+    insecure = True
+
+    [keystone_authtoken]
+    auth_type=password
+    auth_url=http://172.18.22.215:35357/v3
+    project_name=admin
+    project_domain_name=Default
+    username=admin
+    user_domain_name=Default
+    password=P91MoSOBi1ayhp7vhvnVeMiHGGmWhZxxgSuyfNwf
+
+Start the service
+
+    vmware_collector --config-file /etc/vmware_collector/vmware_collector.conf
+
+## Full configuration
+
+    [DEFAULT]
+    interval=60
+    log_dir = /var/log/vmware_collector
+
+    metrics=cpu,ram,network_tx,network_rx,disk_read,disk_write
+
+    [vmware]
+    host_ip=192.168.22.171
+    host_port=443
+    host_username=administrator@vsphere.local
+    host_password=99Cloud!@#
+    insecure = True
+
+    [keystone_authtoken]
+    auth_type=password
+    auth_url=http://172.18.22.215:35357/v3
+    project_name=admin
+    project_domain_name=Default
+    username=admin
+    user_domain_name=Default
+    password=P91MoSOBi1ayhp7vhvnVeMiHGGmWhZxxgSuyfNwf
+
+    [coordination]
+    backend_url = memcached://172.18.22.212:11211
