@@ -1,0 +1,19 @@
+---
+- name: Running vmware_collector bootstrap container
+  vars:
+    vmware_collector_vars: "{{ vmware_collector }}"
+  kolla_docker:
+    action: "start_container"
+    common_options: "{{ docker_common_options }}"
+    detach: False
+    environment:
+      KOLLA_BOOTSTRAP:
+      KOLLA_CONFIG_STRATEY: "{{ config_strategy }}"
+    image: "{{ vmware_collector_vars.image }}"
+    labels:
+      BOOTSTRAP:
+    name: "bootstrap_vmware_collector"
+    restart_policy: "never"
+    volumes: "{{ vmware_collector_vars.volumes }}"
+  run_once: True
+  delegate_to: "{{ groups[vmware_collector_vars.group][0] }}"
