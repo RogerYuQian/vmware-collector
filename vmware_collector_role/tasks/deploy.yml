@@ -2,5 +2,8 @@
 - include: "config.yml"
   when: inventory_hostname in groups[vmware_collector.group]
 
+- include: bootstrap.yml
+  when: inventory_hostname in groups[vmware_collector.group]
+
 - name: Flush handlers
   meta: flush_handlers
