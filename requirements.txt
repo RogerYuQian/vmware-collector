@@ -5,4 +5,5 @@ oslo_config
 oslo_log
 pymemcache
 python-novaclient
+redis
 tooz
