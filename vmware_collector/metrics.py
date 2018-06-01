@@ -2,6 +2,8 @@ import re
 
 from oslo_log import log
 from oslo_utils import units
+
+from vmware_collector.common import utils
 from vmware_collector.services import neutron
 
 
@@ -14,7 +16,6 @@ VC_NETWORK_TX_COUNTER = 'net:transmitted:average'
 VC_VIRTUAL_DISK_READ_RATE_CNTR = "virtualDisk:read:average"
 VC_VIRTUAL_DISK_WRITE_RATE_CNTR = "virtualDisk:write:average"
 
-UUID_RE = (r'[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}')
 
 class BaseMetric(object):
     counter_name = None
@@ -227,7 +228,7 @@ def _change_dev2vol(conf, stat, devices):
                            is not None else [])
 
     def _regular_search(fileName):
-        result = re.search(UUID_RE, fileName, re.IGNORECASE)
+        result = re.search(utils.UUID_RE, fileName, re.IGNORECASE)
         if not result:
             LOG.warning('There is no uuid format string in filename: %s' %
                         fileName)

@@ -26,6 +26,7 @@ from vmware_collector.common import utils
 from vmware_collector.services import gnocchi
 from vmware_collector.services import nova
 from vmware_collector.services import vmware
+from vmware_collector.sync import service as sync
 
 
 LOG = log.getLogger(__name__)
@@ -176,7 +177,22 @@ class Manager(object):
         self.vm_scheduler = VmScheduler(conf, self)
         if conf.coordination.backend_url is not None:
             self.vm_scheduler.configure()
+        self.sync_manager = sync.SyncManager(conf)
+        self._sync_run()
+
         greenthread.spawn(self._get_vm_mobjs)
+
+    def _sync_run(self):
+        @periodics.periodic(
+            spacing=self.conf.vm_cache_period, run_immediately=True)
+        def syncing():
+            self.sync_manager.sync()
+
+        periodic = periodics.PeriodicWorker.create([])
+        periodic.add(syncing)
+        t = threading.Thread(target=periodic.start)
+        t.daemon = True
+        t.start()
 
     def get_vm_mobjs(self):
         self.vm_mobjs[:] = self.vm_scheduler.provide_fresh_vm_mobjs()

@@ -10,6 +10,7 @@ from tooz import coordination
 
 
 LOG = log.getLogger(__name__)
+UUID_RE = (r'[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}')
 
 
 def now():

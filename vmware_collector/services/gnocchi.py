@@ -1,3 +1,4 @@
+import iso8601
 import sys
 
 from oslo_config import cfg
@@ -9,6 +10,7 @@ from gnocchiclient import exceptions as gnocchi_exc
 from vmware_collector.common import constants
 from vmware_collector.common import exceptions
 from vmware_collector.common import opts
+from vmware_collector.common import utils
 from vmware_collector.services import keystone
 from vmware_collector.services import nova
 
@@ -203,6 +205,17 @@ class GnocchiHelper(object):
                     metric.instance_id,
                     metric.resource_name)
         return resource
+
+    def get_resources(self, resource_type):
+        return self.client.resource.list(resource_type)
+
+    def delete_resource(self, resource_id, hard=False):
+        if hard:
+            self.client.resource.delete(resource_id)
+        else:
+            now = utils.now().replace(tzinfo=iso8601.iso8601.UTC)
+            update_dic = {'ended_at': now}
+            self.client.resource.update('generic', resource_id, update_dic)
 
     def get_instance_resource(self, instance_id):
         server = self.get_server_info(instance_id)
