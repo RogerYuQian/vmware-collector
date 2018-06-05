@@ -12,7 +12,11 @@ OPTS = [
                help='the number of vms when pulling metrics'),
     cfg.IntOpt('vm_cache_period', default=600,
                help='the period of the vm is cached'),
-    cfg.ListOpt('metrics', default=['cpu'])
+    cfg.ListOpt('metrics', default=['cpu']),
+    cfg.BoolOpt('hard_delete', default=False,
+                help='If true, the unchecked resources will be '
+                     'automatically deleted. If false, only flag '
+                     'their status as deleted')
 ]
 
 VMWARE_OPTS = [
