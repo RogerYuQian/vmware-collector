@@ -44,13 +44,13 @@ class VmScheduler(object):
         self.index = 0
         self.members_num = 1
         if conf.coordination.backend_url is not None:
-            LOG.warning("Connrdination's backend_url is not configured"
-                        " and cannot collect data from multiple processes")
             self.coordinator, self.current_id = (
                 utils.get_coordinator_and_start(conf.coordination.backend_url))
         else:
             # NOTE(rogeryu): If the conf.coordination.backend_url is not configured,
             # it is necessary to ensure that the process can proceed smoothly.
+            LOG.warning("Connrdination's backend_url is not configured"
+                        " and cannot collect data from multiple processes")
             self.current_id = utils.current_id()
 
     def _get_vm_sch_mobjs(self, current_index, members_num):

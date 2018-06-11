@@ -13,11 +13,11 @@ insecure = {{ vmware_vcenter_insecure }}
 [keystone_authtoken]
 auth_type = password
 auth_url = {{ admin_protocol }}://{{ kolla_internal_fqdn }}:{{ keystone_admin_port }}
-project_name = admin
+project_name = service
 project_domain_name = {{ default_project_domain_name }}
-username = admin
+username = nova
 user_domain_name = {{ default_user_domain_name }}
-password = {{ keystone_admin_password }}
+password = {{ nova_keystone_password }}
 
 [coordination]
 {% if enable_redis | bool %}

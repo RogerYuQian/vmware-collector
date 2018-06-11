@@ -26,6 +26,7 @@
   merge_configs:
     sources:
       - "{{ role_path }}/templates/vmware_collector.conf.j2"
+      - "{{ node_custom_config }}/global.conf"
       - "{{ node_custom_config }}/vmware_collector.conf"
     dest: "{{ node_config_directory }}/vmware_collector/vmware_collector.conf"
     mode: "0660"

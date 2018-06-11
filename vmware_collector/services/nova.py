@@ -20,7 +20,12 @@ def get_nova_client(conf, api_version='2.29'):
 
 
 # cache the returns
-def get_all_instances(conf, marker=None, limit=None):
+def get_all_instances(conf, marker=None, limit=None, all_projects=True):
+    search_opts = {
+        'all_tenants': all_projects
+    }
 
     nova_client = get_nova_client(conf)
-    return nova_client.servers.list(marker=marker, limit=limit)
+    return nova_client.servers.list(marker=marker,
+                                    limit=limit,
+                                    search_opts=search_opts)

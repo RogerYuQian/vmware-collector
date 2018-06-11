@@ -17,7 +17,14 @@ Add vmware_collector related groups into inventory files
 
 Vmware_collector is disabled in default, add `enable_vmware_collector` in `globals.yml` file
 
-    echo 'enable_vmware_collector: yes' >> /etc/kolla/globals.yml
+    cat <<EOF >> /etc/kolla/globals.yml
+    enable_vmware_collector: yes
+    vmware_vcenter_host_ip: 192.168.53.207
+    vmware_vcenter_host_port: 443
+    vmware_vcenter_host_username: admin
+    vmware_vcenter_host_password: password
+    vmware_vcenter_insecure: "True"
+    EOF
 
 Then you could deploy by using
 
