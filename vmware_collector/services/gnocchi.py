@@ -311,9 +311,12 @@ def upgrade():
         try:
             gnocchi.resource_type.get(name=name)
         except gnocchi_exc.ResourceTypeNotFound:
+            LOG.info('Resource not found: %s, Creating...', name)
             rt = {'name': name, 'attributes': attributes}
             gnocchi.resource_type.create(resource_type=rt)
+            LOG.info('Resource type: %s created', name)
 
+    LOG.info('Start updating resource types')
     for ops in resources_update_operations:
         if ops['type'] == 'update_attribute_type':
             rt = gnocchi.resource_type.get(name=ops['resource_type'])
@@ -328,6 +331,10 @@ def upgrade():
             try:
                 gnocchi.resource_type.get(name=ops['resource_type'])
             except gnocchi_exc.ResourceTypeNotFound:
+                LOG.info('Resource not found: %s, Creating...',
+                         ops['resource_type'])
                 rt = {'name': ops['resource_type'],
                       'attributes': ops['data'][0]['attributes']}
                 gnocchi.resource_type.create(resource_type=rt)
+                LOG.info('Resource type: %s created', ops['resource_type'])
+    LOG.info('Resource types update completed')

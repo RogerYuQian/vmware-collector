@@ -1,3 +1,5 @@
+# coding: utf-8
+
 import re
 
 from oslo_log import log
@@ -15,6 +17,9 @@ VC_NETWORK_RX_COUNTER = 'net:received:average'
 VC_NETWORK_TX_COUNTER = 'net:transmitted:average'
 VC_VIRTUAL_DISK_READ_RATE_CNTR = "virtualDisk:read:average"
 VC_VIRTUAL_DISK_WRITE_RATE_CNTR = "virtualDisk:write:average"
+
+translation_mapping = {'root': ['硬盘 1', 'Hard disk 1'],
+                       'cd_dvd': ['CD/DVD 驱动器', 'CD/DVD drive']}
 
 
 class BaseMetric(object):
@@ -245,7 +250,8 @@ def _change_dev2vol(conf, stat, devices):
     # | uuid  | Volume id in Openstack           |
     # --------------------------------------------
     def _parse_backing_filename(device):
-        if device.deviceInfo['label'] == 'Hard disk 1':
+        if (device.deviceInfo['label'].encode('utf-8') in
+            translation_mapping['root']):
             LOG.debug('The current device is Root Disk')
             fileName = device.backing.fileName
             if 'volume' in fileName:
@@ -254,7 +260,8 @@ def _change_dev2vol(conf, stat, devices):
                 return volume_id
             else:
                 return 'root'
-        elif 'CD/DVD drive' not in device.deviceInfo['label']:
+        elif not [dev_name for dev_name in translation_mapping['cd_dvd']
+                  if dev_name in device.deviceInfo['label'].encode('utf-8')]:
             LOG.debug('The current device is VirtualDisk')
             fileName = device.backing.fileName
             if 'volume' in fileName:
