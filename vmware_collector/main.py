@@ -7,7 +7,6 @@
 import collections
 import datetime
 import eventlet
-import msgpack
 import sys
 import tenacity
 import threading
@@ -47,8 +46,9 @@ class VmScheduler(object):
             self.coordinator, self.current_id = (
                 utils.get_coordinator_and_start(conf.coordination.backend_url))
         else:
-            # NOTE(rogeryu): If the conf.coordination.backend_url is not configured,
-            # it is necessary to ensure that the process can proceed smoothly.
+            # NOTE(rogeryu): If the conf.coordination.backend_url is not,
+            # configured, it is necessary to ensure that the process can
+            # proceed smoothly.
             LOG.warning("Connrdination's backend_url is not configured"
                         " and cannot collect data from multiple processes")
             self.current_id = utils.current_id()
@@ -288,11 +288,12 @@ class Manager(object):
             LOG.info('Get all metrics in member: %s in %s seconds',
                      self.vm_scheduler.current_id, period.total_seconds())
             next_run = start + datetime.timedelta(
-                    seconds=self.conf.interval)
+                seconds=self.conf.interval)
             time_left = next_run - end
             if time_left.total_seconds() > 0:
                 LOG.info('Sleep %s seconds to run next cycle in member: %s',
-                         time_left.total_seconds(), self.vm_scheduler.current_id)
+                         time_left.total_seconds(),
+                         self.vm_scheduler.current_id)
                 greenthread.sleep(time_left.total_seconds())
             else:
                 LOG.warning(('it takes too long to pull metrics then'
