@@ -195,7 +195,7 @@ def _change_key2port(conf, stat, devices):
             port = neutron.get_port_by_mac(conf, device.macAddress)
             if port == []:
                 LOG.warning("Can't find the port information with "
-                            "this mac: %s" % device.mac_address)
+                            "this mac: %s" % device.macAddress)
                 result[str(device.key)] = stat[str(device.key)]
             else:
                 result[port[0]['id']] = stat[str(device.key)]
