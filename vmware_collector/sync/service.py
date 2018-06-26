@@ -34,13 +34,21 @@ class SyncManager(object):
         # Sort processing
         resources_attribute = []
         attached_set = set()
+        original_resource_set = set()
 
         for resource_type in self.sort_process_list:
             resources_attribute += self.base.get_resources_attribute(
                 resource_type)
 
-        original_resource_set = {resource_attribute.get('original_resource_id')
-                                 for resource_attribute in resources_attribute}
+        for resource_attribute in resources_attribute[:]:
+            if resource_attribute.get('original_resource_id') == 'root':
+                if resource_attribute.get('instance_id') not in instances_ids:
+                    del_ids.add(resource_attribute.get('id'))
+                resources_attribute.remove(resource_attribute)
+                continue
+            original_resource_set.add(resource_attribute.get(
+                'original_resource_id'))
+
         for instance_info in instances_info:
             attached_set |= set(instance_info.get('volume_ids'))
             attached_set |= set(instance_info.get('port_ids'))

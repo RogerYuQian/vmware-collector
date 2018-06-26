@@ -293,6 +293,6 @@ def _change_dev2vol(conf, stat, devices):
         # We don't process the raw data
         else:
             LOG.warning('We do not process the raw data, the fileName in '
-                        'vmware is %s' % device.backing.fileName)
-            result = stat
+                        'vmware is %s, the device is %s' %
+                        (device.backing.fileName, stat))
     return result
