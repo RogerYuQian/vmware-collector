@@ -210,6 +210,7 @@ def _change_dev2vol(conf, stat, devices):
     '''
 
     result = {}
+    ide_device_key_map, scsi_device_key_map = [], []
     key_map = {device.key: index for index, device in enumerate(devices)}
 
     # ------------------------------------------------------------
@@ -227,10 +228,14 @@ def _change_dev2vol(conf, stat, devices):
     # ------------------------------------------------------------
     # TODO (The controller cannot be created in openstack,
     #       so the default controller <SCSI 0/IDE 0> is fixed here)
-    ide_device_key_map = (devices[key_map[200]].device if key_map.get(200)
-                          is not None else [])
-    scsi_device_key_map = (devices[key_map[1000]].device if key_map.get(1000)
-                           is not None else [])
+    controller_keys = {200: ide_device_key_map, 1000: scsi_device_key_map}
+
+    for key in controller_keys:
+        if key_map.get(key) is not None and hasattr(
+            devices[key_map.get(key)], 'device'):
+            controller_keys[key] = devices[key_map[key]].device
+        else:
+            controller_keys[key] = []
 
     def _regular_search(fileName):
         result = re.search(utils.UUID_RE, fileName, re.IGNORECASE)
