@@ -233,9 +233,7 @@ def _change_dev2vol(conf, stat, devices):
     for key in controller_keys:
         if key_map.get(key) is not None and hasattr(
             devices[key_map.get(key)], 'device'):
-            controller_keys[key] = devices[key_map[key]].device
-        else:
-            controller_keys[key] = []
+            controller_keys[key].extend(devices[key_map[key]].device)
 
     def _regular_search(fileName):
         result = re.search(utils.UUID_RE, fileName, re.IGNORECASE)
