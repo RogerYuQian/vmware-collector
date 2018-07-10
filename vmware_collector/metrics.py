@@ -17,6 +17,8 @@ VC_NETWORK_RX_COUNTER = 'net:received:average'
 VC_NETWORK_TX_COUNTER = 'net:transmitted:average'
 VC_VIRTUAL_DISK_READ_RATE_CNTR = "virtualDisk:read:average"
 VC_VIRTUAL_DISK_WRITE_RATE_CNTR = "virtualDisk:write:average"
+VC_VIRTUAL_DISK_READ_IOPS_CNTR = "virtualDisk:numberReadAveraged:average"
+VC_VIRTUAL_DISK_WRITE_IOPS_CNTR = "virtualDisk:numberWriteAveraged:average"
 
 translation_mapping = {'root': ['硬盘 1', 'Hard disk 1'],
                        'cd_dvd': ['CD/DVD 驱动器', 'CD/DVD drive']}
@@ -164,6 +166,44 @@ class DiskWriteMetric(BaseMetric):
         # Stats provided from vSphere are in KB/s, converting it to B/s.
         for key in stat:
             value = stat.get(key, 0) * units.Ki
+            yield key, value
+
+
+class DiskReadIopsMetric(BaseMetric):
+    counter_name = VC_VIRTUAL_DISK_READ_IOPS_CNTR
+    instance = '*'
+    gnocchi_resource_type = 'instance_disk'
+    gnocchi_metric_name = 'disk.device.read.iops'
+
+    def handle_result(self, entity_metric):
+        stat = super(DiskReadIopsMetric, self).handle_result(entity_metric)
+        # For some device counters, in addition to the per device value
+        # the Performance manager also returns the aggregated value.
+        # Just to be consistent, deleting the aggregated value if present.
+        stat.pop(None, None)
+        devices = self.inspector.get_hardware_device(entity_metric)
+        stat = _change_dev2vol(self.conf, stat, devices)
+        for key in stat:
+            value = stat.get(key, 0)
+            yield key, value
+
+
+class DiskWriteIopsMetric(BaseMetric):
+    counter_name = VC_VIRTUAL_DISK_WRITE_IOPS_CNTR
+    instance = '*'
+    gnocchi_resource_type = 'instance_disk'
+    gnocchi_metric_name = 'disk.device.write.iops'
+
+    def handle_result(self, entity_metric):
+        stat = super(DiskWriteIopsMetric, self).handle_result(entity_metric)
+        # For some device counters, in addition to the per device value
+        # the Performance manager also returns the aggregated value.
+        # Just to be consistent, deleting the aggregated value if present.
+        stat.pop(None, None)
+        devices = self.inspector.get_hardware_device(entity_metric)
+        stat = _change_dev2vol(self.conf, stat, devices)
+        for key in stat:
+            value = stat.get(key, 0)
             yield key, value
 
 
