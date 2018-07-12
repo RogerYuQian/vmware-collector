@@ -39,8 +39,9 @@ Start the service
     [DEFAULT]
     interval=60
     log_dir = /var/log/vmware_collector
-
+    vm_cache_period=600
     metrics=cpu,ram,network_tx,network_rx,disk_read,disk_write
+    hard_delete=False
 
     [vmware]
     host_ip=192.168.22.171
@@ -60,3 +61,8 @@ Start the service
 
     [coordination]
     backend_url = memcached://172.18.22.212:11211
+
+## Common configuration interpretation
+
+    Get more configuration item information Please refer to the common/opts.py file, \
+    where have relevant explanation

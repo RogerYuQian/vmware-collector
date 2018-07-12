@@ -6,6 +6,7 @@ This code include a ansible role to deploy vmware_collector container. Here is h
 
     ln -s $(readlink -f vmware_collector/vmware_collector_role) /etc/ansible/roles/
 
+    # The <kolla-ansible> directory is usually under '/usr/share/', you can search by the 'find' command
     cp /etc/ansible/roles/vmware_collector_role/vmware_collector.yml <kolla-ansible>/ansible/vmware_collector.yml
 
 Add vmware_collector related groups into inventory files

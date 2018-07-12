@@ -4,7 +4,7 @@ will be deployed and integrate with the OpenStack.
 # Prerequisite
 
 - kolla pike image
-  - redis, gnocchi-\*, cron, kolla\_toolbox, fluentd
+  - redis, gnocchi-\*, aodh-\*, cron, kolla\_toolbox, fluentd
 - kolla-ansible pike source code
 - vmware\_collector source code and image
 
@@ -13,27 +13,45 @@ will be deployed and integrate with the OpenStack.
 ## prepare gnocchi account and endpoint
 
 ```bash
-# create service and endpoint
+# create service and endpoint for gnocchi & aodh
 gnocchi_url=http://192.168.122.6:8041
+aodh_url=http://192.168.122.6:8042
+
 openstack service create --name gnocchi metric
-service_id=$(openstack service list -f value | grep gnocchi | awk '{print $1}')
+openstack service create --name aodh alarming
+
+gnocchi_service_id=$(openstack service list -f value | grep gnocchi | awk '{print $1}')
+aodh_service_id=$(openstack service list -f value | grep aodh | awk '{print $1}')
 openstack endpoint create \
 	--publicurl $gnocchi_url \
     --adminurl $gnocchi_url \
     --internal $gnocchi_url \
     --region RegionOne \
-    $service_id
+    $gnocchi_service_id
+openstack endpoint create \
+	--publicurl $aodh_url \
+    --adminurl $aodh_url \
+    --internal $aodh_url \
+    --region RegionOne \
+    $aodh_service_id
+
 iptables -I INPUT 1 -p tcp --dport 8041 -j ACCEPT
+iptables -I INPUT 1 -p tcp --dport 8042 -j ACCEPT
 
 # create user
 project_service_id=$(openstack project list  -f value | awk '/services/{print $1}')
 
 openstack user create \
-	--password jFje0vEFZ8YAIfsw2uV8yiKfKh97uWaxFvJQMhYA \
+	--password {gnocchi_passwd} \
     --project $project_service_id \
     --enable gnocchi
+openstack user create \
+	--password {aodh_passwd} \
+    --project $project_service_id \
+    --enable aodh
 
 openstack role add --project services --user gnocchi admin
+openstack role add --project services --user aodh admin
 ```
 
 ## Install kolla-ansible in virtualenv
@@ -96,9 +114,15 @@ copy ceph related resource into gnocchi custom resource
     cp ceph.conf ceph.client.gnocchi.keyring\
         /etc/kolla/config/gnocchi/
 
+Make sure rabbitmq has the 'openstack' user, if not, create it and empowerment. Aodh will use
+
+    rabbitmqctl list_users | grep openstack
+    rabbitmqctl add_user openstack {openstack_passwd}
+    rabbitmqctl set_permissions -p / openstack '.*' '.*' '.*'
+
 # deploy
 
-    kolla-ansible deploy -t redis,gnocchi
+    kolla-ansible deploy -t redis,gnocchi,aodh
 
 > deploy vmware-collector, please check [deployment](deployment.md)
 
