@@ -3,6 +3,7 @@ will be deployed and integrate with the OpenStack.
 
 # Prerequisite
 
+- ensure the clock on all nodes are synchronized
 - kolla pike image
   - redis, gnocchi-\*, aodh-\*, cron, kolla\_toolbox, fluentd
 - kolla-ansible pike source code
