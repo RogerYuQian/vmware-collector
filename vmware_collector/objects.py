@@ -1,4 +1,3 @@
-from vmware_collector.common import constants
 from vmware_collector.common import utils
 
 
@@ -36,19 +35,19 @@ class ReousrceMetric(object):
 
     def to_metric(self):
         return {
-                self.metric_name: [{
-                    'value': self.value,
-                    'timestamp': utils.format_date(self.timestamp)
-                    }]
-                }
+            self.metric_name: [{
+                'value': self.value,
+                'timestamp': utils.format_date(self.timestamp)
+            }]
+        }
 
     # NOTE(jeffrey4l) gnocchi >= 4.2 api changed here
     def to_metric_v42(self):
         return {
-                self.metric_name: {
-                    'measures': [{
-                        'value': self.value,
-                        'timestamp': utils.format_date(self.timestamp)
-                        }]
-                    }
-                }
+            self.metric_name: {
+                'measures': [{
+                    'value': self.value,
+                    'timestamp': utils.format_date(self.timestamp)
+                }]
+            }
+        }

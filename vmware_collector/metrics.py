@@ -68,7 +68,7 @@ class CPUMetric(BaseMetric):
     def handle_result(self, entity_metric):
         stat = super(CPUMetric, self).handle_result(entity_metric)
         cpu_util = stat.pop(None, 0)
-        yield None, float(cpu_util)/100
+        yield None, float(cpu_util) / 100
 
 
 class RAMMetric(BaseMetric):
@@ -214,10 +214,10 @@ def on_load_failure_callback(*args, **kwargs):
 def load_metrics(conf):
     import stevedore
     mgr = stevedore.named.NamedExtensionManager(
-            'vmware_collector.metrics',
-            conf.metrics,
-            on_load_failure_callback=on_load_failure_callback,
-            invoke_on_load=False)
+        'vmware_collector.metrics',
+        conf.metrics,
+        on_load_failure_callback=on_load_failure_callback,
+        invoke_on_load=False)
 
     return [e.plugin for e in mgr]
 
@@ -293,8 +293,8 @@ def _change_dev2vol(conf, stat, devices):
     # | uuid  | Volume id in Openstack           |
     # --------------------------------------------
     def _parse_backing_filename(device):
-        if (device.deviceInfo['label'].encode('utf-8') in
-            translation_mapping['root']):
+        if device.deviceInfo['label'].encode('utf-8') in translation_mapping[
+            'root']:
             LOG.debug('The current device is Root Disk')
             fileName = device.backing.fileName
             if 'volume' in fileName:

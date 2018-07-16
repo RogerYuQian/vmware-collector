@@ -1,4 +1,4 @@
-import unittest
+# import unittest
 
 from vmware_collector.tests import base as test_base
 from vmware_collector import main2

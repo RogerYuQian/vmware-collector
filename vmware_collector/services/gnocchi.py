@@ -202,8 +202,8 @@ class GnocchiHelper(object):
         elif (metric.resource_type ==
                 constants.RT_INSTANCE_NETWORK_INTERFACE):
             resource = self.get_instance_network_resource(
-                    metric.instance_id,
-                    metric.resource_name)
+                metric.instance_id,
+                metric.resource_name)
         return resource
 
     def get_resources(self, resource_type):
@@ -270,12 +270,12 @@ class GnocchiHelper(object):
                     res = res[0]
                 else:
                     raise exceptions.ResourceNotFound(
-                            resource_id=resource_id,
-                            resource_type=resource_type)
+                        resource_id=resource_id,
+                        resource_type=resource_type)
             self._resource_cache[resource_id] = res
         return res
 
-    def get_metric(self, metric_name,  instance_stat):
+    def get_metric(self, metric_name, instance_stat):
         resource = self.get_resource(instance_stat)
         if resource.get(metric_name):
             return resource.get(metric_name)
