@@ -201,12 +201,16 @@ class Manager(object):
     def _get_vm_mobjs(self):
         while True:
             self.get_vm_mobjs()
+            LOG.debug("VMs collected, waitting for the next period: %ss to "
+                      "get vm data", self.conf.vm_cache_period)
             greenthread.sleep(self.conf.vm_cache_period)
 
     def query_vm_perf_stats(self, vm_mobjs):
         pool = greenpool.GreenPool(self.conf.pool_size)
         rets = []
         stats = []
+        LOG.debug("The current vm_num is: %s, pool_size is: %s",
+                  self.conf.vm_num, self.conf.pool_size)
         for sub_vms in utils.group(vm_mobjs, self.conf.vm_num):
             ret = pool.spawn(self.insp._query_vm_perf_stats,
                              sub_vms,
