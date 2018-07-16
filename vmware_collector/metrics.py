@@ -11,7 +11,7 @@ from vmware_collector.services import neutron
 
 LOG = log.getLogger(__name__)
 
-VC_AVERAGE_MEMORY_CONSUMED_CNTR = 'mem:consumed:average'
+VC_AVERAGE_MEMORY_CONSUMED_CNTR = 'mem:usage:average'
 VC_AVERAGE_CPU_CONSUMED_CNTR = 'cpu:usage:average'
 VC_NETWORK_RX_COUNTER = 'net:received:average'
 VC_NETWORK_TX_COUNTER = 'net:transmitted:average'
