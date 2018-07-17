@@ -86,7 +86,7 @@ class NetworkTXMetric(BaseMetric):
     counter_name = VC_NETWORK_TX_COUNTER
     gnocchi_resource_type = 'instance_network_interface'
     instance = '*'
-    gnocchi_metric_name = 'network.outcoming.bytes.rate'
+    gnocchi_metric_name = 'network.outgoing.bytes.rate'
 
     def handle_result(self, entity_metric):
         stat = super(NetworkTXMetric, self).handle_result(entity_metric)
