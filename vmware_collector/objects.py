@@ -23,7 +23,7 @@ class ReousrceMetric(object):
         self.resource_type = resource_type
 
         if not self.timestamp:
-            self.timestamp = utils.now()
+            self.timestamp = utils.utcnow()
 
     @property
     def original_resource_id(self):

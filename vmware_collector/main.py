@@ -273,7 +273,7 @@ class Manager(object):
 
     def run(self):
         while True:
-            start = utils.now()
+            start = utils.utcnow()
             try:
                 if not self.vm_mobjs:
                     LOG.info('No vm in member: %s is found. sleep 10 seconds.',
@@ -287,7 +287,7 @@ class Manager(object):
             except Exception:
                 LOG.exception('Unkonw exception: %s')
 
-            end = utils.now()
+            end = utils.utcnow()
             period = end - start
             LOG.info('Get all metrics in member: %s in %s seconds',
                      self.vm_scheduler.current_id, period.total_seconds())

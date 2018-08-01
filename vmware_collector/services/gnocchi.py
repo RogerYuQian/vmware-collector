@@ -213,8 +213,8 @@ class GnocchiHelper(object):
         if hard:
             self.client.resource.delete(resource_id)
         else:
-            now = utils.now().replace(tzinfo=iso8601.iso8601.UTC)
-            update_dic = {'ended_at': now}
+            utcnow = utils.utcnow().replace(tzinfo=iso8601.iso8601.UTC)
+            update_dic = {'ended_at': utcnow}
             self.client.resource.update('generic', resource_id, update_dic)
 
     def get_instance_resource(self, instance_id):
