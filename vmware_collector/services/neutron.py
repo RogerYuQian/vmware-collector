@@ -18,7 +18,7 @@ def get_neutron_client(conf):
 
 
 # cache the returns
-@mem_cache(3600, 'port', 1000000)
+@mem_cache(3600)
 def get_port_by_mac(conf, mac_address):
 
     neutron_client = get_neutron_client(conf)

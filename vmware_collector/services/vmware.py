@@ -97,7 +97,7 @@ class VsphereInspector(object):
                 self._vm_name_lookup_map[vm_mobj.value] = uuid
         return self._vm_name_lookup_map.get(vm_name, None)
 
-    @mem_cache(3600, 'device', 1000000)
+    @mem_cache(3600)
     def get_hardware_device(self, entity_metric):
         session = self._api_session
         properties = ["config.hardware.device"]
