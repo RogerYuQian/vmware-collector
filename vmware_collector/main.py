@@ -18,6 +18,7 @@ from eventlet import greenthread
 from futurist import periodics
 from oslo_config import cfg
 from oslo_log import log
+from oslo_vmware import exceptions as vexc
 from tooz import coordination
 
 from vmware_collector.common import opts
@@ -76,8 +77,14 @@ class VmScheduler(object):
             vm_mobj = self.manager.insp.get_vm_mobj(instance.id)
             if not vm_mobj:
                 continue
-            vm_power_stat = self.manager.insp.query_vm_property(
-                vm_mobj, 'runtime.powerState')
+            try:
+                vm_power_stat = self.manager.insp.query_vm_property(
+                    vm_mobj, 'runtime.powerState')
+            except vexc.ManagedObjectNotFoundException:
+                LOG.warning('The instance: %s has already been deleted or '
+                            'has been completely created', instance.id)
+                continue
+
             if vm_power_stat == 'poweredOff':
                 LOG.debug('VM %s power state is off', vm_mobj)
                 continue
@@ -163,7 +170,16 @@ class VmScheduler(object):
                       ' administrator to handle this issue')
             raise
         else:
-            return self._get_vm_sch_mobjs(self.index, self.members_num)
+            try:
+                LOG.info('Now member: %s is starting to get vm objs',
+                         self.current_id)
+                vm_sch_mobjs = self._get_vm_sch_mobjs(self.index,
+                                                      self.members_num)
+                return vm_sch_mobjs
+            except Exception as e:
+                LOG.exception('Unkonw exception during the vm cache '
+                              'spawning, the reason is %s', e)
+                return None
 
 
 class Manager(object):
@@ -186,7 +202,12 @@ class Manager(object):
         @periodics.periodic(
             spacing=self.conf.vm_cache_period, run_immediately=True)
         def syncing():
-            self.sync_manager.sync()
+            LOG.info("Start synchronization of Nova and gnocchi resources")
+            try:
+                self.sync_manager.sync()
+                LOG.info("Resource synchronization completed")
+            except Exception as e:
+                LOG.exception('Unkonw exception: %s', e)
 
         periodic = periodics.PeriodicWorker.create([])
         periodic.add(syncing)
@@ -195,14 +216,25 @@ class Manager(object):
         t.start()
 
     def get_vm_mobjs(self):
-        self.vm_mobjs[:] = self.vm_scheduler.provide_fresh_vm_mobjs()
+        """Get vm_mobjs from vmware
+
+        Do not update VM list when there is an exception.
+        """
+        _vm_mobjs = self.vm_scheduler.provide_fresh_vm_mobjs()
+        if _vm_mobjs:
+            self.vm_mobjs[:] = _vm_mobjs
+            LOG.info("VMs collected, waitting for the next period: %ss to "
+                     "get vm data", self.conf.vm_cache_period)
+        else:
+            LOG.info("Some anomalies cause no VMS to be collected, "
+                     "waitting for the next period: %ss to get vm "
+                     "data", self.conf.vm_cache_period)
 
     # TODO Add function to update vm list according to create_action
     def _get_vm_mobjs(self):
         while True:
+            LOG.info("Starting get vm mobjs.")
             self.get_vm_mobjs()
-            LOG.debug("VMs collected, waitting for the next period: %ss to "
-                      "get vm data", self.conf.vm_cache_period)
             greenthread.sleep(self.conf.vm_cache_period)
 
     def query_vm_perf_stats(self, vm_mobjs):
@@ -284,8 +316,8 @@ class Manager(object):
             except KeyboardInterrupt:
                 LOG.info('Exiting')
                 break
-            except Exception:
-                LOG.exception('Unkonw exception: %s')
+            except Exception as e:
+                LOG.exception('Unkonw exception: %s', e)
 
             end = utils.utcnow()
             period = end - start
