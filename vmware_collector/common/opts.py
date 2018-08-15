@@ -16,7 +16,9 @@ OPTS = [
     cfg.BoolOpt('hard_delete', default=False,
                 help='If true, the unchecked resources will be '
                      'automatically deleted. If false, only flag '
-                     'their status as deleted')
+                     'their status as deleted'),
+    cfg.IntOpt('vm_list_limit', default=100,
+               help='The number of vm for each list')
 ]
 
 VMWARE_OPTS = [
