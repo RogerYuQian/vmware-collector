@@ -31,6 +31,20 @@ Then you could deploy by using
 
     kolla-ansible -i <multinode> -p <kolla-ansible>/ansible/vmware_collector.yml deploy
 
+Deploy multiple vmware_collector processes
+
+**Note:**
+    vmware_collector supports member groups, allowing multiple processes to run at the same time, and the collected content is fragmented according to the number of members.
+    You can run multiple processes on a single node, or run one process per node. Since it is now deployed through kolla-ansible, Recommend each node to initiate an acquisition process.
+    The above modification about the inventory file is to deploy a vmware_collector process on each control node. If you want to deploy on the compute node or other nodes, add the corresponding:
+
+    cat <<EOF >> multinode
+    [vmware_collector:children]
+    control
+    compute
+    storage
+    EOF
+
 # Animbus
 
 Animbus support vmware_collector since 6.3, the roles and inventory file is already added. If you wanna

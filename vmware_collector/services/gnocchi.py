@@ -194,16 +194,21 @@ class GnocchiHelper(object):
         return server
 
     def get_resource(self, metric):
-        if metric.resource_type == constants.RT_INSTANCE:
-            resource = self.get_instance_resource(metric.instance_id)
-        elif metric.resource_type == constants.RT_INSTANCE_DISK:
-            resource = self.get_instance_disk_resource(metric.instance_id,
-                                                       metric.resource_name)
-        elif (metric.resource_type ==
-                constants.RT_INSTANCE_NETWORK_INTERFACE):
-            resource = self.get_instance_network_resource(
-                metric.instance_id,
-                metric.resource_name)
+        try:
+            if metric.resource_type == constants.RT_INSTANCE:
+                resource = self.get_instance_resource(metric.instance_id)
+            elif metric.resource_type == constants.RT_INSTANCE_DISK:
+                resource = self.get_instance_disk_resource(metric.instance_id,
+                                                           metric.resource_name)
+            elif (metric.resource_type ==
+                    constants.RT_INSTANCE_NETWORK_INTERFACE):
+                resource = self.get_instance_network_resource(
+                    metric.instance_id,
+                    metric.resource_name)
+        except Exception as e:
+            LOG.exception('Unkonw exception occurred while getting '
+                          'the resource, the reason is: %s', e)
+            return {}
         return resource
 
     def get_resources(self, resource_type):
@@ -219,13 +224,14 @@ class GnocchiHelper(object):
 
     def get_instance_resource(self, instance_id):
         server = self.get_server_info(instance_id)
+        image_ref = server.image['id'] if server.image != '' else ''
         params = {
             'id': server.id,
             'display_name': server.name,
             'flavor_name': server.flavor['id'],
             'flavor_id': server.flavor['id'],
             'host': getattr(server, 'OS-EXT-SRV-ATTR:host'),
-            'image_ref': server.image['id'],
+            'image_ref': image_ref,
             'server_group': ''  # TODO
         }
         return self._get_or_create_resource(instance_id, 'instance', params)

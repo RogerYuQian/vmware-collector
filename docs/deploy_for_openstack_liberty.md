@@ -86,6 +86,11 @@ fix the globals according
     enable_gnocchi: yes
     enable_redis: yes
 
+    # If gnocchi's backend uses ceph and deployed separately, please
+    # makesure enable_ceph is 'no' & gnocchi_backend_storage is 'ceph'
+    enable_ceph: no
+    gnocchi_backend_storage: ceph
+
 Fix the passwords according
 
     #/etc/kolla/globals.yml
