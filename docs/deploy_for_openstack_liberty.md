@@ -8,6 +8,7 @@ will be deployed and integrate with the OpenStack.
   - redis, gnocchi-\*, aodh-\*, cron, kolla\_toolbox, fluentd
 - kolla-ansible pike source code
 - vmware\_collector source code and image
+- ensure gnocchi node selinux is disable
 
 # Install setps
 
@@ -91,6 +92,11 @@ fix the globals according
     enable_ceph: no
     gnocchi_backend_storage: ceph
 
+    # declare interpreter of python and ansible in case kolla-ansible deploy
+    # may erros , $PATH is gnocchi node python and ansible path.
+    ansible_python_interpreter: $PATH/bin/python
+    ansible_interpreter: $PATH/bin/ansible
+
 Fix the passwords according
 
     #/etc/kolla/globals.yml
@@ -126,6 +132,11 @@ Make sure rabbitmq has the 'openstack' user, if not, create it and empowerment. 
     rabbitmqctl add_user openstack {openstack_passwd}
     rabbitmqctl set_permissions -p / openstack '.*' '.*' '.*'
 
+# improve yml (already completed in prepare gnocchi account and endpoint )
+
+    echo "" > kolla-ansible/ansible/roles/aodh/tasks/register.yml
+    echo "" > kolla-ansible/ansible/roles/gnocchi/tasks/register.yml
+
 # deploy
 
     kolla-ansible deploy -t redis,gnocchi,aodh
@@ -137,3 +148,15 @@ Make sure rabbitmq has the 'openstack' user, if not, create it and empowerment. 
 ```sql
 grant all on *.* to 'root'@'%' identified by 'admin' with grant option;
 ```
+
+# update rpms
+ python2-cradox-2.1.0-1.el7.x86_64.rpm
+ python2-Cython-0.25.2-3.el7.x86_64.rpm
+ python-rados-10.2.10-0.el7.x86_64.rpm
+ gnocchi container install rpms
+
+
+# update database
+ docker exec gnocchi_api gnocchi-upgrade --config-file /etc/gnocchi/gnocchi.conf
+	#if controller`s database < mysql5.6, need to change sql datetime(6) to datetime
+	#aodh database as same
