@@ -24,10 +24,12 @@ VC_REAL_TIME_SAMPLING_INTERVAL = 20
 
 
 vmware_api = None
+api_session = None
 
 
 def get_api_session(conf):
     global vmware_api
+    global api_session
     if vmware_api is None:
         vmware_api = __import__('oslo_vmware.api')
     api_session = vmware_api.api.VMwareAPISession(

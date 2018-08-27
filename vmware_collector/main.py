@@ -8,6 +8,7 @@ import collections
 import datetime
 import eventlet
 import sys
+import signal
 import tenacity
 import threading
 import time
@@ -339,7 +340,14 @@ class Manager(object):
                 greenthread.sleep(10)
 
 
+def handler(signum, frame):
+    from services.vmware import api_session
+    api_session.logout()
+
+
 def main():
+    for sig in [signal.SIGINT, signal.SIGHUP, signal.SIGTERM]:
+        signal.signal(sig, handler)
     conf = cfg.ConfigOpts()
     opts.register_opts(conf)
     log.register_options(conf)
