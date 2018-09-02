@@ -343,6 +343,7 @@ class Manager(object):
 def handler(signum, frame):
     from services.vmware import api_session
     api_session.logout()
+    exit()
 
 
 def main():
