@@ -79,7 +79,7 @@ class RAMMetric(BaseMetric):
     def handle_result(self, entity_metric):
         stat = super(RAMMetric, self).handle_result(entity_metric)
         ram = stat.pop(None, 0)
-        yield None, ram
+        yield None, float(ram) / 100
 
 
 class NetworkTXMetric(BaseMetric):
